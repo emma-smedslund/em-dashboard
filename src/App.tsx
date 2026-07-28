@@ -20,19 +20,9 @@ import { TODAY, formatAsOf } from './lib/date'
 
 const TABS = [
   {
-    id: 'health',
-    label: 'Team Health Pulse',
-    description: 'Self-reported sentiment trend and current workload per person.',
-  },
-  {
     id: 'delivery',
     label: 'Delivery Radar',
     description: 'Current sprint progress, recent velocity, and open delivery risks.',
-  },
-  {
-    id: 'tracker',
-    label: '1:1s & Action Tracker',
-    description: 'Upcoming 1:1s and open follow-ups, soonest first.',
   },
   {
     id: 'insights',
@@ -41,15 +31,25 @@ const TABS = [
   },
   {
     id: 'actions',
-    label: 'Actions',
+    label: 'Actions & Decisions Log',
     description: 'AI-suggested and manually added follow-ups, from proposal to completion.',
+  },
+  {
+    id: 'health',
+    label: 'Team Pulse',
+    description: 'Self-reported sentiment trend and current workload per person.',
+  },
+  {
+    id: 'tracker',
+    label: "1:1's",
+    description: 'Upcoming 1:1s and open follow-ups, soonest first.',
   },
 ] as const
 
 type TabId = (typeof TABS)[number]['id']
 
 function App() {
-  const [activeTab, setActiveTab] = useState<TabId>('health')
+  const [activeTab, setActiveTab] = useState<TabId>('delivery')
   const active = TABS.find((tab) => tab.id === activeTab)!
   const {
     insights,
@@ -90,13 +90,7 @@ function App() {
           {active.description}
         </p>
 
-        {activeTab === 'health' && (
-          <TeamHealthPulse members={teamMembers} entries={healthEntries} />
-        )}
         {activeTab === 'delivery' && <DeliveryRadar sprint={sprintStatus} />}
-        {activeTab === 'tracker' && (
-          <ActionTracker items={actionItems} members={teamMembers} />
-        )}
         {activeTab === 'insights' && (
           <AIInsights
             insights={insights}
@@ -119,7 +113,18 @@ function App() {
             onViewInsight={() => setActiveTab('insights')}
           />
         )}
+        {activeTab === 'health' && (
+          <TeamHealthPulse members={teamMembers} entries={healthEntries} />
+        )}
+        {activeTab === 'tracker' && (
+          <ActionTracker items={actionItems} members={teamMembers} />
+        )}
       </section>
+
+      <footer className="mt-8 text-center text-xs text-[var(--text-muted)]">
+        Demo data is used to illustrate how signals from engineering tools can be
+        consolidated and translated into actionable leadership insights.
+      </footer>
 
       {confirmation && (
         <div
