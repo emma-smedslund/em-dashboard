@@ -10,6 +10,12 @@ export function daysFromToday(isoDate: string): number {
   return Math.round((date.getTime() - TODAY.getTime()) / DAY_MS)
 }
 
+export function daysBetween(fromIso: string, toIso: string): number {
+  const from = new Date(`${fromIso}T00:00:00`)
+  const to = new Date(`${toIso}T00:00:00`)
+  return Math.round((to.getTime() - from.getTime()) / DAY_MS)
+}
+
 export function getActionStatus(isoDate: string): 'overdue' | 'upcoming' {
   return daysFromToday(isoDate) < 0 ? 'overdue' : 'upcoming'
 }

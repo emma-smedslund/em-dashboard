@@ -12,29 +12,6 @@ export interface HealthEntry {
   workload: number // 1-5, 5 = overloaded
 }
 
-export interface VelocityPoint {
-  sprint: string // e.g. "Sprint 24"
-  committedPoints: number
-  completedPoints: number
-}
-
-export interface RiskFlag {
-  id: string
-  type: 'stale_pr' | 'blocked_ticket' | 'velocity_drop'
-  description: string
-  severity: 'low' | 'medium' | 'high'
-}
-
-export interface SprintStatus {
-  name: string
-  startDate: string
-  endDate: string
-  totalPoints: number
-  completedPoints: number
-  velocityHistory: VelocityPoint[]
-  risks: RiskFlag[]
-}
-
 export interface ActionItem {
   id: string
   memberId: string
@@ -50,10 +27,20 @@ export interface JiraIssue {
   title: string
   status: 'todo' | 'in_progress' | 'blocked' | 'done'
   assigneeId: string
-  sprint: string
   epic: string
+  updatedDate: string // ISO date; last activity, used to detect stale tickets
   blockedReason?: string
-  updatedDate: string // ISO date
+  blockedSince?: string // ISO date; present only while status === 'blocked'
+  crossTeamDependency?: string // name of the other team this issue is blocked on, if any
+  startedDate?: string // ISO date; when work began, used for cycle time
+  doneDate?: string // ISO date; when the issue was completed, used for cycle time
+}
+
+// A goal the EM is tracking for the current delivery window, with progress
+// measured by explicitly linked issues rather than story points.
+export interface DeliveryGoal {
+  text: string
+  linkedIssueIds: string[]
 }
 
 export interface SlackMessage {

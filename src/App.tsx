@@ -6,15 +6,16 @@ import { AIInsights } from './components/AIInsights'
 import { Actions } from './components/Actions'
 import { TabNav } from './components/TabNav'
 import { useActions } from './hooks/useActions'
+import { useDeliveryGoal } from './hooks/useDeliveryGoal'
 import {
   teamMembers,
   healthEntries,
-  sprintStatus,
   actionItems,
   aiInsights,
   actionEntries,
   jiraIssues,
   slackMessages,
+  deliveryGoalSeed,
 } from './data/mockData'
 import { TODAY, formatAsOf } from './lib/date'
 
@@ -22,7 +23,7 @@ const TABS = [
   {
     id: 'delivery',
     label: 'Delivery Radar',
-    description: 'Current sprint progress, recent velocity, and open delivery risks.',
+    description: 'Operational delivery health: goal progress, flow, and where work is stuck.',
   },
   {
     id: 'insights',
@@ -63,6 +64,7 @@ function App() {
     confirmation,
     clearConfirmation,
   } = useActions(aiInsights, actionEntries)
+  const { goal, setText, linkIssue, unlinkIssue } = useDeliveryGoal(deliveryGoalSeed)
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -90,7 +92,17 @@ function App() {
           {active.description}
         </p>
 
-        {activeTab === 'delivery' && <DeliveryRadar sprint={sprintStatus} />}
+        {activeTab === 'delivery' && (
+          <DeliveryRadar
+            issues={jiraIssues}
+            members={teamMembers}
+            goal={goal}
+            onSetGoalText={setText}
+            onLinkIssue={linkIssue}
+            onUnlinkIssue={unlinkIssue}
+            onViewInsights={() => setActiveTab('insights')}
+          />
+        )}
         {activeTab === 'insights' && (
           <AIInsights
             insights={insights}

@@ -1,13 +1,13 @@
 import type {
   TeamMember,
   HealthEntry,
-  SprintStatus,
   ActionItem,
   AIInsight,
   ActionEntry,
   JiraIssue,
   SlackMessage,
   InitiativeLoadPoint,
+  DeliveryGoal,
 } from '../types'
 
 export const teamMembers: TeamMember[] = [
@@ -50,54 +50,95 @@ export const healthEntries: HealthEntry[] = [
   { memberId: 'm5', week: '2026-07-20', sentiment: 4, workload: 3 },
 ]
 
-export const sprintStatus: SprintStatus = {
-  name: 'Sprint 24',
-  startDate: '2026-07-21',
-  endDate: '2026-08-01',
-  totalPoints: 42,
-  completedPoints: 18,
-  velocityHistory: [
-    { sprint: 'Sprint 21', committedPoints: 38, completedPoints: 36 },
-    { sprint: 'Sprint 22', committedPoints: 40, completedPoints: 39 },
-    { sprint: 'Sprint 23', committedPoints: 41, completedPoints: 33 },
-    { sprint: 'Sprint 24', committedPoints: 42, completedPoints: 18 },
-  ],
-  risks: [
-    {
-      id: 'r1',
-      type: 'stale_pr',
-      description: "Daniel's PR #482 (auth refactor) has had no review activity in 4 days",
-      severity: 'high',
-    },
-    {
-      id: 'r3',
-      type: 'velocity_drop',
-      description: 'Completed points dropped 15% last sprint versus the 3-sprint average',
-      severity: 'medium',
-    },
-  ],
-}
-
-// Simulated Jira source data — ticket-level detail behind the delivery-risk
-// insights, standing in for a real Jira integration.
+// Simulated Jira source data — a kanban board's worth of tickets, standing
+// in for a real Jira integration. Statuses and dates are hand-placed so the
+// flow signals on Delivery Radar (WIP, staleness, blocked age, cycle time)
+// come out to something realistic rather than being computed from nothing.
 export const jiraIssues: JiraIssue[] = [
+  // --- In progress ---
   {
     id: 'ENG-1183',
     title: 'Auth refactor',
     status: 'in_progress',
     assigneeId: 'm2',
-    sprint: 'Sprint 24',
     epic: 'Auth Hardening',
     updatedDate: '2026-07-24',
   },
+  {
+    id: 'ENG-1220',
+    title: 'Add analytics event for checkout funnel',
+    status: 'in_progress',
+    assigneeId: 'm1',
+    epic: 'Payments Migration',
+    updatedDate: '2026-07-27',
+  },
+  {
+    id: 'ENG-1221',
+    title: 'Optimize webhook retry logic',
+    status: 'in_progress',
+    assigneeId: 'm3',
+    epic: 'Payments Migration',
+    updatedDate: '2026-07-21',
+  },
+  {
+    id: 'ENG-1222',
+    title: 'Redesign empty states for dashboard widgets',
+    status: 'in_progress',
+    assigneeId: 'm4',
+    epic: 'Design System v2',
+    updatedDate: '2026-07-26',
+  },
+  // Jonas is carrying five concurrent tickets — the High WIP example.
+  {
+    id: 'ENG-1230',
+    title: 'Fix pagination bug in admin table',
+    status: 'in_progress',
+    assigneeId: 'm5',
+    epic: 'Design System v2',
+    updatedDate: '2026-07-27',
+  },
+  {
+    id: 'ENG-1231',
+    title: 'Add CSV export for reports',
+    status: 'in_progress',
+    assigneeId: 'm5',
+    epic: 'Onboarding Revamp',
+    updatedDate: '2026-07-25',
+  },
+  {
+    id: 'ENG-1232',
+    title: 'Update onboarding email templates',
+    status: 'in_progress',
+    assigneeId: 'm5',
+    epic: 'Onboarding Revamp',
+    updatedDate: '2026-07-20',
+  },
+  {
+    id: 'ENG-1233',
+    title: 'Investigate slow query on dashboard load',
+    status: 'in_progress',
+    assigneeId: 'm5',
+    epic: 'Auth Hardening',
+    updatedDate: '2026-07-27',
+  },
+  {
+    id: 'ENG-1234',
+    title: 'Add feature flag for new checkout flow',
+    status: 'in_progress',
+    assigneeId: 'm5',
+    epic: 'Payments Migration',
+    updatedDate: '2026-07-24',
+  },
+
+  // --- Blocked ---
   {
     id: 'ENG-1190',
     title: 'Add checkout confirmation screen',
     status: 'blocked',
     assigneeId: 'm4',
-    sprint: 'Sprint 24',
     epic: 'Onboarding Revamp',
     blockedReason: 'Waiting on design sign-off',
+    blockedSince: '2026-07-24',
     updatedDate: '2026-07-24',
   },
   {
@@ -105,9 +146,10 @@ export const jiraIssues: JiraIssue[] = [
     title: 'Apply promo discount at checkout',
     status: 'blocked',
     assigneeId: 'm1',
-    sprint: 'Sprint 24',
     epic: 'Payments Migration',
     blockedReason: 'Waiting on Payments API v2 contract from Platform team',
+    blockedSince: '2026-07-23',
+    crossTeamDependency: 'Platform team',
     updatedDate: '2026-07-23',
   },
   {
@@ -115,9 +157,10 @@ export const jiraIssues: JiraIssue[] = [
     title: 'Refund flow via new payments endpoint',
     status: 'blocked',
     assigneeId: 'm3',
-    sprint: 'Sprint 24',
     epic: 'Payments Migration',
     blockedReason: 'Waiting on Payments API v2 contract from Platform team',
+    blockedSince: '2026-07-25',
+    crossTeamDependency: 'Platform team',
     updatedDate: '2026-07-25',
   },
   {
@@ -125,12 +168,144 @@ export const jiraIssues: JiraIssue[] = [
     title: 'Migrate subscription billing to v2 endpoint',
     status: 'blocked',
     assigneeId: 'm5',
-    sprint: 'Sprint 24',
     epic: 'Payments Migration',
     blockedReason: 'Waiting on Payments API v2 contract from Platform team',
+    blockedSince: '2026-07-26',
+    crossTeamDependency: 'Platform team',
     updatedDate: '2026-07-26',
   },
+  {
+    id: 'ENG-1202',
+    title: 'Provision staging environment for new payments service',
+    status: 'blocked',
+    assigneeId: 'm2',
+    epic: 'Payments Migration',
+    blockedReason: 'Infrastructure waiting on staging environment provisioning',
+    blockedSince: '2026-07-23',
+    updatedDate: '2026-07-23',
+  },
+  {
+    id: 'ENG-1210',
+    title: 'Clarify discount stacking rules for promo codes',
+    status: 'blocked',
+    assigneeId: 'm4',
+    epic: 'Payments Migration',
+    blockedReason: 'Waiting for product clarification',
+    blockedSince: '2026-07-26',
+    updatedDate: '2026-07-26',
+  },
+
+  // --- Done, previous 14-day window (Jul 1–14) — cycle time comparison base ---
+  {
+    id: 'ENG-1150',
+    title: 'Add rate limiting to public API',
+    status: 'done',
+    assigneeId: 'm3',
+    epic: 'Auth Hardening',
+    startedDate: '2026-07-01',
+    doneDate: '2026-07-04',
+    updatedDate: '2026-07-04',
+  },
+  {
+    id: 'ENG-1151',
+    title: 'Migrate email templates to new service',
+    status: 'done',
+    assigneeId: 'm4',
+    epic: 'Onboarding Revamp',
+    startedDate: '2026-07-03',
+    doneDate: '2026-07-07',
+    updatedDate: '2026-07-07',
+  },
+  {
+    id: 'ENG-1152',
+    title: 'Refactor checkout state machine',
+    status: 'done',
+    assigneeId: 'm1',
+    epic: 'Payments Migration',
+    startedDate: '2026-07-05',
+    doneDate: '2026-07-10',
+    updatedDate: '2026-07-10',
+  },
+  {
+    id: 'ENG-1153',
+    title: 'Add dark mode to settings page',
+    status: 'done',
+    assigneeId: 'm2',
+    epic: 'Design System v2',
+    startedDate: '2026-07-08',
+    doneDate: '2026-07-12',
+    updatedDate: '2026-07-12',
+  },
+  {
+    id: 'ENG-1154',
+    title: 'Fix flaky integration test for login',
+    status: 'done',
+    assigneeId: 'm5',
+    epic: 'Auth Hardening',
+    startedDate: '2026-07-10',
+    doneDate: '2026-07-13',
+    updatedDate: '2026-07-13',
+  },
+
+  // --- Done, current 14-day window (Jul 15–28) ---
+  {
+    id: 'ENG-1240',
+    title: 'Add CSV export for admin users',
+    status: 'done',
+    assigneeId: 'm3',
+    epic: 'Onboarding Revamp',
+    startedDate: '2026-07-15',
+    doneDate: '2026-07-19',
+    updatedDate: '2026-07-19',
+  },
+  {
+    id: 'ENG-1241',
+    title: 'Implement webhook signature verification',
+    status: 'done',
+    assigneeId: 'm1',
+    epic: 'Payments Migration',
+    startedDate: '2026-07-17',
+    doneDate: '2026-07-22',
+    updatedDate: '2026-07-22',
+  },
+  {
+    id: 'ENG-1242',
+    title: 'Redesign settings navigation',
+    status: 'done',
+    assigneeId: 'm4',
+    epic: 'Design System v2',
+    startedDate: '2026-07-19',
+    doneDate: '2026-07-25',
+    updatedDate: '2026-07-25',
+  },
+  {
+    id: 'ENG-1243',
+    title: 'Add retry logic for failed payments',
+    status: 'done',
+    assigneeId: 'm2',
+    epic: 'Payments Migration',
+    startedDate: '2026-07-21',
+    doneDate: '2026-07-26',
+    updatedDate: '2026-07-26',
+  },
+  {
+    id: 'ENG-1244',
+    title: 'Update onboarding checklist copy',
+    status: 'done',
+    assigneeId: 'm5',
+    epic: 'Onboarding Revamp',
+    startedDate: '2026-07-23',
+    doneDate: '2026-07-28',
+    updatedDate: '2026-07-28',
+  },
 ]
+
+// Seed for the EM's editable delivery goal — persisted client-side (see
+// useDeliveryGoal), this is just the first-load default.
+export const deliveryGoalSeed: DeliveryGoal = {
+  text: 'Ship the Payments v2 migration end-to-end',
+  linkedIssueIds: ['ENG-1188', 'ENG-1241', 'ENG-1243'],
+}
 
 // Simulated Slack source data — two channels' worth of messages, standing in
 // for a real Slack integration.
