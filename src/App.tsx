@@ -2,12 +2,17 @@ import { useState } from 'react'
 import { TeamHealthPulse } from './components/TeamHealthPulse'
 import { DeliveryRadar } from './components/DeliveryRadar'
 import { ActionTracker } from './components/ActionTracker'
+import { AIInsights } from './components/AIInsights'
+import { Actions } from './components/Actions'
 import { TabNav } from './components/TabNav'
+import { useActions } from './hooks/useActions'
 import {
   teamMembers,
   healthEntries,
   sprintStatus,
   actionItems,
+  aiInsights,
+  actionEntries,
 } from './data/mockData'
 import { TODAY, formatAsOf } from './lib/date'
 
@@ -27,6 +32,16 @@ const TABS = [
     label: '1:1s & Action Tracker',
     description: 'Upcoming 1:1s and open follow-ups, soonest first.',
   },
+  {
+    id: 'insights',
+    label: 'AI Insights',
+    description: 'AI-surfaced risks worth your attention, ranked by confidence.',
+  },
+  {
+    id: 'actions',
+    label: 'Actions',
+    description: 'AI-suggested and manually added follow-ups, from proposal to completion.',
+  },
 ] as const
 
 type TabId = (typeof TABS)[number]['id']
@@ -34,6 +49,18 @@ type TabId = (typeof TABS)[number]['id']
 function App() {
   const [activeTab, setActiveTab] = useState<TabId>('health')
   const active = TABS.find((tab) => tab.id === activeTab)!
+  const {
+    insights,
+    actions,
+    suggestActionFromInsight,
+    dismissInsight,
+    acceptAction,
+    dismissAction,
+    completeAction,
+    addManualAction,
+    confirmation,
+    clearConfirmation,
+  } = useActions(aiInsights, actionEntries)
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -68,7 +95,42 @@ function App() {
         {activeTab === 'tracker' && (
           <ActionTracker items={actionItems} members={teamMembers} />
         )}
+        {activeTab === 'insights' && (
+          <AIInsights
+            insights={insights}
+            onAddToActions={suggestActionFromInsight}
+            onDismiss={dismissInsight}
+          />
+        )}
+        {activeTab === 'actions' && (
+          <Actions
+            actions={actions}
+            members={teamMembers}
+            onAcceptAction={acceptAction}
+            onDismissAction={dismissAction}
+            onCompleteAction={completeAction}
+            onAddManualAction={addManualAction}
+            onViewInsight={() => setActiveTab('insights')}
+          />
+        )}
       </section>
+
+      {confirmation && (
+        <div
+          role="status"
+          className="fixed bottom-4 right-4 flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-1)] px-4 py-3 text-sm text-[var(--text-primary)] shadow-lg"
+        >
+          {confirmation}
+          <button
+            type="button"
+            onClick={clearConfirmation}
+            aria-label="Dismiss confirmation"
+            className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+          >
+            &times;
+          </button>
+        </div>
+      )}
     </div>
   )
 }

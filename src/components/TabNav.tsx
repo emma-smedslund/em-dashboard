@@ -3,7 +3,7 @@ export function TabNav<TabId extends string>({
   activeId,
   onChange,
 }: {
-  tabs: { id: TabId; label: string }[]
+  tabs: readonly { id: TabId; label: string }[]
   activeId: TabId
   onChange: (id: TabId) => void
 }) {
