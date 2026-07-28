@@ -101,7 +101,7 @@ export const actionItems: ActionItem[] = [
     memberId: 'm4',
     kind: 'follow_up',
     title: 'Follow up: personal development goal for Sofia',
-    dueDate: '2026-08-15',
+    dueDate: '2026-07-25',
     status: 'overdue',
   },
   {
