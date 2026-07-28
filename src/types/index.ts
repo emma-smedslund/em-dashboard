@@ -43,11 +43,57 @@ export interface ActionItem {
   dueDate: string // ISO date; status ('overdue' vs 'upcoming') is derived from this, see lib/date.ts
 }
 
+// Simulated signal sources. These stand in for real Jira/Slack integrations
+// until a live connection is wired up.
+export interface JiraIssue {
+  id: string // e.g. 'ENG-1190'
+  title: string
+  status: 'todo' | 'in_progress' | 'blocked' | 'done'
+  assigneeId: string
+  sprint: string
+  epic: string
+  blockedReason?: string
+  updatedDate: string // ISO date
+}
+
+export interface SlackMessage {
+  id: string
+  channel: string
+  authorName: string
+  timestamp: string // ISO datetime
+  text: string
+  threadId: string
+  replyCount: number
+}
+
+export interface InitiativeLoadPoint {
+  sprint: string
+  activeInitiatives: number
+}
+
+export type InsightCategory =
+  | 'delivery_risk'
+  | 'recurring_issue'
+  | 'unresolved_question'
+  | 'possible_overload'
+
+export type SignalSourceType = 'jira' | 'slack' | 'health' | 'delivery'
+
+export interface InsightSource {
+  type: SignalSourceType
+  label: string // human-readable evidence line, always shown
+  // Links to a concrete record when present: JiraIssue.id, SlackMessage.id,
+  // or "<memberId>:<week>" for a HealthEntry. Omitted for aggregate/
+  // statistical evidence (e.g. a velocity trend) that has no single record.
+  refId?: string
+}
+
 export interface AIInsight {
   id: string
   title: string
   summary: string
-  rationale: string[] // the evidence bullets, copied verbatim into any action created from this insight
+  category: InsightCategory
+  sources: InsightSource[] // the evidence, each pointing at a source signal
   confidence: 'low' | 'medium' | 'high'
   recommendedAction: string
   status: 'new' | 'accepted' | 'dismissed'

@@ -13,6 +13,8 @@ import {
   actionItems,
   aiInsights,
   actionEntries,
+  jiraIssues,
+  slackMessages,
 } from './data/mockData'
 import { TODAY, formatAsOf } from './lib/date'
 
@@ -98,6 +100,10 @@ function App() {
         {activeTab === 'insights' && (
           <AIInsights
             insights={insights}
+            jiraIssues={jiraIssues}
+            slackMessages={slackMessages}
+            healthEntries={healthEntries}
+            members={teamMembers}
             onAddToActions={suggestActionFromInsight}
             onDismiss={dismissInsight}
           />

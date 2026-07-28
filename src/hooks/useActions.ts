@@ -40,7 +40,7 @@ export function useActions(seedInsights: AIInsight[], seedActions: ActionEntry[]
       createdDate: toISODate(TODAY),
       sourceInsightId: insight.id,
       sourceInsightTitle: insight.title,
-      sourceEvidence: insight.rationale,
+      sourceEvidence: insight.sources.map((s) => s.label),
     }
 
     setActions((prev) => [action, ...prev])
