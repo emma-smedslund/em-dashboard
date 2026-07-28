@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { TeamHealthPulse } from './components/TeamHealthPulse'
 import { DeliveryRadar } from './components/DeliveryRadar'
 import { ActionTracker } from './components/ActionTracker'
+import { TabNav } from './components/TabNav'
 import {
   teamMembers,
   healthEntries,
@@ -9,27 +11,30 @@ import {
 } from './data/mockData'
 import { TODAY, formatAsOf } from './lib/date'
 
-function SectionCard({
-  title,
-  description,
-  children,
-}: {
-  title: string
-  description: string
-  children: React.ReactNode
-}) {
-  return (
-    <section className="rounded-xl border border-[var(--border)] bg-[var(--page-plane)] p-5">
-      <h2 className="text-lg font-semibold text-[var(--text-primary)]">
-        {title}
-      </h2>
-      <p className="mb-4 text-sm text-[var(--text-muted)]">{description}</p>
-      {children}
-    </section>
-  )
-}
+const TABS = [
+  {
+    id: 'health',
+    label: 'Team Health Pulse',
+    description: 'Self-reported sentiment trend and current workload per person.',
+  },
+  {
+    id: 'delivery',
+    label: 'Delivery Radar',
+    description: 'Current sprint progress, recent velocity, and open delivery risks.',
+  },
+  {
+    id: 'tracker',
+    label: '1:1s & Action Tracker',
+    description: 'Upcoming 1:1s and open follow-ups, soonest first.',
+  },
+] as const
+
+type TabId = (typeof TABS)[number]['id']
 
 function App() {
+  const [activeTab, setActiveTab] = useState<TabId>('health')
+  const active = TABS.find((tab) => tab.id === activeTab)!
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       <header className="mb-8 flex flex-wrap items-baseline justify-between gap-2">
@@ -46,28 +51,24 @@ function App() {
         </p>
       </header>
 
-      <div className="space-y-6">
-        <SectionCard
-          title="Team Health Pulse"
-          description="Self-reported sentiment trend and current workload per person."
-        >
+      <TabNav tabs={TABS} activeId={activeTab} onChange={setActiveTab} />
+
+      <section
+        role="tabpanel"
+        className="mt-6 rounded-xl border border-[var(--border)] bg-[var(--page-plane)] p-5"
+      >
+        <p className="mb-4 text-sm text-[var(--text-muted)]">
+          {active.description}
+        </p>
+
+        {activeTab === 'health' && (
           <TeamHealthPulse members={teamMembers} entries={healthEntries} />
-        </SectionCard>
-
-        <SectionCard
-          title="Delivery Radar"
-          description="Current sprint progress, recent velocity, and open delivery risks."
-        >
-          <DeliveryRadar sprint={sprintStatus} />
-        </SectionCard>
-
-        <SectionCard
-          title="1:1s & Action Tracker"
-          description="Upcoming 1:1s and open follow-ups, soonest first."
-        >
+        )}
+        {activeTab === 'delivery' && <DeliveryRadar sprint={sprintStatus} />}
+        {activeTab === 'tracker' && (
           <ActionTracker items={actionItems} members={teamMembers} />
-        </SectionCard>
-      </div>
+        )}
+      </section>
     </div>
   )
 }
