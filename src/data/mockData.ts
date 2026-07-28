@@ -10,6 +10,17 @@ import type {
   DeliveryGoal,
 } from '../types'
 
+// This whole file simulates data that would, in a real deployment, come from
+// external tools rather than be hand-authored. Three exports below are the
+// actual integration points — see the comment directly above each:
+//   `jiraIssues`    <- Jira REST API
+//   `slackMessages` <- Slack Web API
+//   `aiInsights`    <- a correlation/LLM pipeline over the two above, not a
+//                      hand-written list (see that comment for why this one
+//                      is architecturally different from the other two)
+// `healthEntries` and `actionItems` are self-reported/app-native data with
+// no single standard API to point to, so they're left as-is.
+
 export const teamMembers: TeamMember[] = [
   { id: 'm1', name: 'Priya Nair', initials: 'PN', role: 'Senior Engineer' },
   { id: 'm2', name: 'Daniel Osei', initials: 'DO', role: 'Engineer' },
@@ -54,6 +65,29 @@ export const healthEntries: HealthEntry[] = [
 // in for a real Jira integration. Statuses and dates are hand-placed so the
 // flow signals on Delivery Radar (WIP, staleness, blocked age, cycle time)
 // come out to something realistic rather than being computed from nothing.
+//
+// To replace with a real Jira integration (REST API `/rest/api/3/search`
+// with a JQL query scoped to your board/project), map fields as:
+//   id                   <- issue.key (e.g. "ENG-1190")
+//   title                <- issue.fields.summary
+//   status               <- issue.fields.status mapped through your own
+//                           status-category table, since Jira status names
+//                           are workflow-specific ("In Review", "Ready for
+//                           QA", ...) and need to collapse onto our four
+//                           values: 'todo' | 'in_progress' | 'blocked' | 'done'
+//   assigneeId           <- issue.fields.assignee.accountId
+//   epic                 <- issue.fields.parent (or your epic-link custom
+//                           field, depending on how the project is configured)
+//   blockedReason        <- a "Blocked reason" custom field, or the text of
+//                           a "flagged" comment, depending on team convention
+//   blockedSince         <- NOT a current-state field — requires the issue
+//                           changelog (`expand=changelog`) to find the most
+//                           recent transition into a blocked status
+//   startedDate/doneDate <- same story: derived from changelog transitions
+//                           into "In Progress" / "Done", not stored directly
+//   crossTeamDependency  <- likely a label or custom field; there's no
+//                           standard Jira field for this, so it depends on
+//                           how your team already tags cross-team blockers
 export const jiraIssues: JiraIssue[] = [
   // --- In progress ---
   {
@@ -307,12 +341,31 @@ export const deliveryGoalSeed: DeliveryGoal = {
   linkedIssueIds: ['ENG-1188', 'ENG-1241', 'ENG-1243'],
 }
 
-// Simulated Slack source data — two channels' worth of messages, standing in
-// for a real Slack integration.
+// Simulated Slack source data, standing in for a real Slack integration.
+// Four channels, matching how this team actually organizes Slack:
+//   #platform-release — deploy/release chatter, plus automated posts from
+//     the Jira <-> Slack integration (e.g. "ticket moved to Blocked")
+//   #platform-help     — questions and requests for help
+//   #platform-alerts   — automated monitoring/observability alerts
+//   #incidents         — formal incident declarations and updates
+//
+// To replace with a real Slack integration (Slack Web API), map fields as:
+//   channel     <- the channel name for each conversations.history call;
+//                  you'd poll/subscribe to exactly the four above
+//   authorName  <- users.info lookup on the message's `user` id — Slack's
+//                  history API only returns user IDs, not display names
+//   timestamp   <- the message's `ts`, converted from a Slack timestamp
+//                  (seconds.microseconds) to an ISO datetime
+//   threadId    <- `thread_ts` (present on any message that's part of a
+//                  thread; conversations.replies fetches the full thread)
+//   replyCount  <- `reply_count` on the thread's root message
+// Bot-authored messages (like the Jira Bot post below) come through the
+// same API — Slack doesn't distinguish bot messages structurally, only via
+// the `bot_id` field on the message.
 export const slackMessages: SlackMessage[] = [
   {
     id: 's1',
-    channel: '#platform-eng',
+    channel: '#platform-release',
     authorName: 'Wei Zhang',
     timestamp: '2026-07-15T09:12:00',
     text: 'Deploy to staging timed out again around the DB migration step — anyone else seeing this?',
@@ -321,7 +374,7 @@ export const slackMessages: SlackMessage[] = [
   },
   {
     id: 's2',
-    channel: '#platform-eng',
+    channel: '#platform-release',
     authorName: 'Sofia Ramirez',
     timestamp: '2026-07-18T14:05:00',
     text: 'Prod deploy got stuck on the migration step for ~10 min before it went through.',
@@ -330,7 +383,7 @@ export const slackMessages: SlackMessage[] = [
   },
   {
     id: 's3',
-    channel: '#platform-eng',
+    channel: '#platform-release',
     authorName: 'Daniel Osei',
     timestamp: '2026-07-22T11:40:00',
     text: 'Same deploy timeout as last week, had to restart the pipeline manually.',
@@ -339,7 +392,7 @@ export const slackMessages: SlackMessage[] = [
   },
   {
     id: 's4',
-    channel: '#platform-eng',
+    channel: '#platform-release',
     authorName: 'Priya Nair',
     timestamp: '2026-07-27T16:20:00',
     text: 'Deploy pipeline timed out on staging again — this is the fourth time this sprint.',
@@ -347,13 +400,40 @@ export const slackMessages: SlackMessage[] = [
     replyCount: 4,
   },
   {
+    id: 's6',
+    channel: '#platform-release',
+    authorName: 'Jira Bot',
+    timestamp: '2026-07-23T08:00:00',
+    text: 'ENG-1188 moved to Blocked — waiting on Payments API v2 contract from Platform team.',
+    threadId: 't6',
+    replyCount: 0,
+  },
+  {
     id: 's5',
-    channel: '#platform-team',
+    channel: '#platform-help',
     authorName: 'Jonas Berg',
     timestamp: '2026-07-25T10:00:00',
     text: 'Quick question — who owns the on-call escalation runbook now that Alex has left the team?',
     threadId: 't5',
     replyCount: 0,
+  },
+  {
+    id: 's7',
+    channel: '#platform-alerts',
+    authorName: 'Monitoring Bot',
+    timestamp: '2026-07-26T13:45:00',
+    text: 'Error rate on checkout-service exceeded 2% for 15 minutes (threshold: 1%).',
+    threadId: 't7',
+    replyCount: 0,
+  },
+  {
+    id: 's8',
+    channel: '#incidents',
+    authorName: 'Wei Zhang',
+    timestamp: '2026-07-24T16:30:00',
+    text: 'INC-014: Elevated latency on Payments API — investigating.',
+    threadId: 't8',
+    replyCount: 2,
   },
 ]
 
@@ -403,6 +483,25 @@ export const actionItems: ActionItem[] = [
   },
 ]
 
+// Unlike `jiraIssues` and `slackMessages` above, this is not a 1:1 stand-in
+// for an external API — it's the *output* of a correlation step that
+// doesn't exist yet in this app. Each insight here was hand-written to look
+// like what that step should eventually produce: a claim, backed by
+// `sources` that point at real jiraIssues/slackMessages/healthEntries
+// records, with a confidence level and a recommended next action.
+//
+// Replacing this with a real pipeline means adding a step (a scheduled job,
+// or an API route called on page load) that:
+//   1. reads the current jiraIssues, slackMessages, and healthEntries
+//   2. runs rules or an LLM prompt over them looking for the four patterns
+//      this app cares about (delivery_risk, recurring_issue,
+//      unresolved_question, possible_overload)
+//   3. emits AIInsight objects whose `sources[].refId` are real ids from
+//      step 1, not just a label string — so "Show evidence" always
+//      resolves to an actual record instead of being static text
+// `status` ('new' | 'accepted' | 'dismissed') would stay app-native state
+// either way, since that's the EM's decision, not something a pipeline
+// determines.
 export const aiInsights: AIInsight[] = [
   {
     id: 'i1',
@@ -425,6 +524,11 @@ export const aiInsights: AIInsight[] = [
         type: 'jira',
         refId: 'ENG-1195',
         label: 'ENG-1195 "Migrate subscription billing to v2 endpoint" — blocked since Jul 26',
+      },
+      {
+        type: 'slack',
+        refId: 's6',
+        label: '#platform-release, Jira Bot, Jul 23 — ENG-1188 automatically flagged as Blocked',
       },
     ],
     confidence: 'high',
@@ -454,27 +558,27 @@ export const aiInsights: AIInsight[] = [
     category: 'recurring_issue',
     title: 'Deploy problems have been raised in four separate threads over two weeks',
     summary:
-      'The same staging/prod deploy timeout has been reported independently four times in #platform-eng since Jul 15, most recently yesterday.',
+      'The same staging/prod deploy timeout has been reported independently four times in #platform-release since Jul 15, most recently yesterday.',
     sources: [
       {
         type: 'slack',
         refId: 's1',
-        label: '#platform-eng, Wei Zhang, Jul 15 — deploy timeout during DB migration step',
+        label: '#platform-release, Wei Zhang, Jul 15 — deploy timeout during DB migration step',
       },
       {
         type: 'slack',
         refId: 's2',
-        label: '#platform-eng, Sofia Ramirez, Jul 18 — prod deploy stuck on migration step',
+        label: '#platform-release, Sofia Ramirez, Jul 18 — prod deploy stuck on migration step',
       },
       {
         type: 'slack',
         refId: 's3',
-        label: '#platform-eng, Daniel Osei, Jul 22 — same timeout, manual pipeline restart',
+        label: '#platform-release, Daniel Osei, Jul 22 — same timeout, manual pipeline restart',
       },
       {
         type: 'slack',
         refId: 's4',
-        label: '#platform-eng, Priya Nair, Jul 27 — fourth occurrence this sprint',
+        label: '#platform-release, Priya Nair, Jul 27 — fourth occurrence this sprint',
       },
     ],
     confidence: 'high',
@@ -486,17 +590,17 @@ export const aiInsights: AIInsight[] = [
     category: 'unresolved_question',
     title: 'A question about on-call ownership has gone unanswered for three days',
     summary:
-      'Jonas asked who owns the on-call escalation runbook after Alex left the team — no one has replied in #platform-team since Jul 25.',
+      'Jonas asked who owns the on-call escalation runbook after Alex left the team — no one has replied in #platform-help since Jul 25.',
     sources: [
       {
         type: 'slack',
         refId: 's5',
         label:
-          '#platform-team, Jonas Berg, Jul 25 — "who owns the on-call escalation runbook now that Alex has left?" (0 replies)',
+          '#platform-help, Jonas Berg, Jul 25 — "who owns the on-call escalation runbook now that Alex has left?" (0 replies)',
       },
     ],
     confidence: 'medium',
-    recommendedAction: 'Clarify on-call escalation ownership in #platform-team',
+    recommendedAction: 'Clarify on-call escalation ownership in #platform-help',
     status: 'new',
   },
   {
