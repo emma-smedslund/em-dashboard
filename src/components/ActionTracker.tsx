@@ -1,5 +1,5 @@
 import type { ActionItem, TeamMember } from '../types'
-import { formatRelativeDue, daysFromToday } from '../lib/date'
+import { formatRelativeDue, daysFromToday, getActionStatus } from '../lib/date'
 import { StatusPill } from './StatusPill'
 
 const KIND_LABEL = {
@@ -23,7 +23,7 @@ export function ActionTracker({
     <ul className="space-y-2">
       {sorted.map((item) => {
         const member = memberById.get(item.memberId)
-        const overdue = item.status === 'overdue'
+        const overdue = getActionStatus(item.dueDate) === 'overdue'
 
         return (
           <li

@@ -40,6 +40,5 @@ export interface ActionItem {
   memberId: string
   kind: 'one_on_one' | 'follow_up'
   title: string
-  dueDate: string // ISO date
-  status: 'upcoming' | 'overdue' | 'done'
+  dueDate: string // ISO date; status ('overdue' vs 'upcoming') is derived from this, see lib/date.ts
 }

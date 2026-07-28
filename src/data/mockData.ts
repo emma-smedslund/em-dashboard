@@ -86,7 +86,6 @@ export const actionItems: ActionItem[] = [
     kind: 'one_on_one',
     title: '1:1 with Daniel — check in on workload',
     dueDate: '2026-07-29',
-    status: 'upcoming',
   },
   {
     id: 'a2',
@@ -94,7 +93,6 @@ export const actionItems: ActionItem[] = [
     kind: 'one_on_one',
     title: '1:1 with Jonas — 30-day ramp check-in',
     dueDate: '2026-07-30',
-    status: 'upcoming',
   },
   {
     id: 'a3',
@@ -102,7 +100,6 @@ export const actionItems: ActionItem[] = [
     kind: 'follow_up',
     title: 'Follow up: personal development goal for Sofia',
     dueDate: '2026-07-25',
-    status: 'overdue',
   },
   {
     id: 'a4',
@@ -110,7 +107,6 @@ export const actionItems: ActionItem[] = [
     kind: 'follow_up',
     title: 'Send Priya feedback on brown bag presentation',
     dueDate: '2026-07-31',
-    status: 'upcoming',
   },
   {
     id: 'a5',
@@ -118,6 +114,5 @@ export const actionItems: ActionItem[] = [
     kind: 'one_on_one',
     title: '1:1 with Wei — biweekly sync',
     dueDate: '2026-08-04',
-    status: 'upcoming',
   },
 ]

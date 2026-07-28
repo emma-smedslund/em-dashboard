@@ -10,6 +10,10 @@ export function daysFromToday(isoDate: string): number {
   return Math.round((date.getTime() - TODAY.getTime()) / DAY_MS)
 }
 
+export function getActionStatus(isoDate: string): 'overdue' | 'upcoming' {
+  return daysFromToday(isoDate) < 0 ? 'overdue' : 'upcoming'
+}
+
 export function formatRelativeDue(isoDate: string): string {
   const diff = daysFromToday(isoDate)
   if (diff === 0) return 'Today'
