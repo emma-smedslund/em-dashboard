@@ -28,6 +28,7 @@ export function DeliveryRadar({
   projectKey,
   syncedAt,
   loading,
+  ready,
   error,
   onRefresh,
 }: {
@@ -42,6 +43,7 @@ export function DeliveryRadar({
   projectKey: string | null
   syncedAt: string | null
   loading: boolean
+  ready: boolean
   error: string | null
   onRefresh: () => void
 }) {
@@ -54,6 +56,24 @@ export function DeliveryRadar({
   useEffect(() => {
     if (!editingGoal) setGoalDraft(goal.text)
   }, [goal.text, editingGoal])
+
+  if (!ready) {
+    return (
+      <div className="space-y-4" aria-live="polite" aria-busy="true">
+        <div className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-1)] px-3 py-2">
+          <StatusPill level="neutral" label="Connecting to Jira" />
+          <span className="text-xs text-[var(--text-muted)]">Loading current delivery data…</span>
+        </div>
+        <div className="animate-pulse space-y-4" aria-hidden="true">
+          <div className="h-36 rounded-lg bg-[var(--surface-1)]" />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="h-40 rounded-lg bg-[var(--surface-1)]" />
+            <div className="h-40 rounded-lg bg-[var(--surface-1)]" />
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   const referenceDate = dataSource === 'live' ? new Date() : TODAY
   const progress = getGoalProgress(goal, issues)

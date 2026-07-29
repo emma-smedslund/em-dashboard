@@ -8,7 +8,7 @@ export interface TeamMember {
 // Simulated signal sources. These stand in for real Jira/Slack integrations
 // until a live connection is wired up.
 export interface JiraIssue {
-  id: string // e.g. 'ENG-1190'
+  id: string // e.g. 'TFP-2'
   title: string
   status: 'todo' | 'in_progress' | 'blocked' | 'done'
   statusName?: string // exact Jira workflow status, e.g. "In Review"

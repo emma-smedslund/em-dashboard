@@ -55,9 +55,10 @@ function App() {
   const active = TABS.find((tab) => tab.id === activeTab)!
   const { goal, setText, linkIssue, unlinkIssue } = useDeliveryGoal(deliveryGoalSeed)
   const jira = useJiraIssues(demoJiraIssues)
+  const jiraIssues = useMemo(() => (jira.ready ? jira.issues : []), [jira.issues, jira.ready])
   const generatedJiraInsights = useMemo(
-    () => generateJiraInsights(jira.issues, jira.source === 'live' ? new Date() : TODAY),
-    [jira.issues, jira.source],
+    () => generateJiraInsights(jiraIssues, jira.source === 'live' ? new Date() : TODAY),
+    [jiraIssues, jira.source],
   )
   const insightSeed = useMemo(
     () => [...generatedJiraInsights, ...DEMO_INSIGHTS],
@@ -65,14 +66,14 @@ function App() {
   )
   const detectedTeamSignals = useMemo(
     () => detectTeamSignals({
-      jiraIssues: jira.issues,
+      jiraIssues,
       jiraDataSource: jira.source,
       slackMessages,
       pullRequestMetrics: pullRequestPeriodMetrics,
       retrospectiveActions: retrospectiveActionPoints,
       referenceDate: jira.source === 'live' ? new Date() : TODAY,
     }),
-    [jira.issues, jira.source],
+    [jiraIssues, jira.source],
   )
   const { signals: teamSignals, setSignalStatus } = useTeamSignals(detectedTeamSignals)
   const {
@@ -117,7 +118,7 @@ function App() {
 
         {activeTab === 'delivery' && (
           <DeliveryRadar
-            issues={jira.issues}
+            issues={jiraIssues}
             members={teamMembers}
             goal={goal}
             onSetGoalText={setText}
@@ -128,6 +129,7 @@ function App() {
             projectKey={jira.projectKey}
             syncedAt={jira.syncedAt}
             loading={jira.loading}
+            ready={jira.ready}
             error={jira.error}
             onRefresh={jira.refresh}
           />
@@ -135,7 +137,7 @@ function App() {
         {activeTab === 'insights' && (
           <AIInsights
             insights={insights}
-            jiraIssues={jira.issues}
+            jiraIssues={jiraIssues}
             slackMessages={slackMessages}
             members={teamMembers}
             jiraDataSource={jira.source}
@@ -153,7 +155,7 @@ function App() {
           <Actions
             actions={actions}
             members={teamMembers}
-            jiraIssues={jira.issues}
+            jiraIssues={jiraIssues}
             jiraDataSource={jira.source}
             projectKey={jira.projectKey}
             syncedAt={jira.syncedAt}
@@ -170,7 +172,7 @@ function App() {
         {activeTab === 'signals' && (
           <TeamSignals
             signals={teamSignals}
-            jiraIssues={jira.issues}
+            jiraIssues={jiraIssues}
             onCreateAction={suggestActionFromSignal}
             onSetStatus={setSignalStatus}
           />

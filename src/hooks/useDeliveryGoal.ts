@@ -9,7 +9,14 @@ function loadStoredGoal(seed: DeliveryGoal): DeliveryGoal {
     if (!stored) return seed
     const parsed = JSON.parse(stored)
     if (typeof parsed.text !== 'string' || !Array.isArray(parsed.linkedIssueIds)) return seed
-    return parsed
+    const linkedIssueIds = parsed.linkedIssueIds.filter(
+      (issueId: unknown): issueId is string =>
+        typeof issueId === 'string' && !issueId.toUpperCase().startsWith('ENG-'),
+    )
+    return {
+      text: parsed.text,
+      linkedIssueIds: linkedIssueIds.length > 0 ? linkedIssueIds : seed.linkedIssueIds,
+    }
   } catch {
     return seed
   }

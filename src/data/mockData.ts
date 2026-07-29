@@ -31,7 +31,7 @@ export const teamMembers: TeamMember[] = [
 //
 // To replace with a real Jira integration (REST API `/rest/api/3/search`
 // with a JQL query scoped to your board/project), map fields as:
-//   id                   <- issue.key (e.g. "ENG-1190")
+//   id                   <- issue.key (e.g. "TFP-2")
 //   title                <- issue.fields.summary
 //   status               <- issue.fields.status mapped through your own
 //                           status-category table, since Jira status names
@@ -54,7 +54,7 @@ export const teamMembers: TeamMember[] = [
 export const jiraIssues: JiraIssue[] = [
   // --- In progress ---
   {
-    id: 'ENG-1183',
+    id: 'TFP-1',
     title: 'Auth refactor',
     status: 'in_progress',
     assigneeId: 'm2',
@@ -62,7 +62,7 @@ export const jiraIssues: JiraIssue[] = [
     updatedDate: '2026-07-24',
   },
   {
-    id: 'ENG-1220',
+    id: 'TFP-2',
     title: 'Add analytics event for checkout funnel',
     status: 'in_progress',
     assigneeId: 'm1',
@@ -70,7 +70,7 @@ export const jiraIssues: JiraIssue[] = [
     updatedDate: '2026-07-27',
   },
   {
-    id: 'ENG-1221',
+    id: 'TFP-3',
     title: 'Optimize webhook retry logic',
     status: 'in_progress',
     assigneeId: 'm3',
@@ -78,7 +78,7 @@ export const jiraIssues: JiraIssue[] = [
     updatedDate: '2026-07-21',
   },
   {
-    id: 'ENG-1222',
+    id: 'TFP-4',
     title: 'Redesign empty states for dashboard widgets',
     status: 'in_progress',
     assigneeId: 'm4',
@@ -87,7 +87,7 @@ export const jiraIssues: JiraIssue[] = [
   },
   // Leo is carrying five concurrent tickets — the High WIP example.
   {
-    id: 'ENG-1230',
+    id: 'TFP-5',
     title: 'Fix pagination bug in admin table',
     status: 'in_progress',
     assigneeId: 'm5',
@@ -95,7 +95,7 @@ export const jiraIssues: JiraIssue[] = [
     updatedDate: '2026-07-27',
   },
   {
-    id: 'ENG-1231',
+    id: 'TFP-6',
     title: 'Add CSV export for reports',
     status: 'in_progress',
     assigneeId: 'm5',
@@ -103,7 +103,7 @@ export const jiraIssues: JiraIssue[] = [
     updatedDate: '2026-07-25',
   },
   {
-    id: 'ENG-1232',
+    id: 'TFP-7',
     title: 'Update onboarding email templates',
     status: 'in_progress',
     assigneeId: 'm5',
@@ -111,7 +111,7 @@ export const jiraIssues: JiraIssue[] = [
     updatedDate: '2026-07-20',
   },
   {
-    id: 'ENG-1233',
+    id: 'TFP-8',
     title: 'Investigate slow query on dashboard load',
     status: 'in_progress',
     assigneeId: 'm5',
@@ -119,7 +119,7 @@ export const jiraIssues: JiraIssue[] = [
     updatedDate: '2026-07-27',
   },
   {
-    id: 'ENG-1234',
+    id: 'TFP-9',
     title: 'Add feature flag for new checkout flow',
     status: 'in_progress',
     assigneeId: 'm5',
@@ -129,7 +129,7 @@ export const jiraIssues: JiraIssue[] = [
 
   // --- Blocked ---
   {
-    id: 'ENG-1190',
+    id: 'TFP-10',
     title: 'Add checkout confirmation screen',
     status: 'blocked',
     assigneeId: 'm4',
@@ -139,7 +139,7 @@ export const jiraIssues: JiraIssue[] = [
     updatedDate: '2026-07-24',
   },
   {
-    id: 'ENG-1188',
+    id: 'TFP-11',
     title: 'Apply promo discount at checkout',
     status: 'blocked',
     assigneeId: 'm1',
@@ -150,7 +150,7 @@ export const jiraIssues: JiraIssue[] = [
     updatedDate: '2026-07-23',
   },
   {
-    id: 'ENG-1191',
+    id: 'TFP-12',
     title: 'Refund flow via new payments endpoint',
     status: 'blocked',
     assigneeId: 'm3',
@@ -161,7 +161,7 @@ export const jiraIssues: JiraIssue[] = [
     updatedDate: '2026-07-25',
   },
   {
-    id: 'ENG-1195',
+    id: 'TFP-13',
     title: 'Migrate subscription billing to v2 endpoint',
     status: 'blocked',
     assigneeId: 'm5',
@@ -172,7 +172,7 @@ export const jiraIssues: JiraIssue[] = [
     updatedDate: '2026-07-26',
   },
   {
-    id: 'ENG-1202',
+    id: 'TFP-14',
     title: 'Provision staging environment for new payments service',
     status: 'blocked',
     assigneeId: 'm2',
@@ -182,7 +182,7 @@ export const jiraIssues: JiraIssue[] = [
     updatedDate: '2026-07-23',
   },
   {
-    id: 'ENG-1210',
+    id: 'TFP-15',
     title: 'Clarify discount stacking rules for promo codes',
     status: 'blocked',
     assigneeId: 'm4',
@@ -194,7 +194,7 @@ export const jiraIssues: JiraIssue[] = [
 
   // --- Done, previous 14-day window (Jul 1–14) — cycle time comparison base ---
   {
-    id: 'ENG-1150',
+    id: 'TFP-16',
     title: 'Add rate limiting to public API',
     status: 'done',
     assigneeId: 'm3',
@@ -204,7 +204,7 @@ export const jiraIssues: JiraIssue[] = [
     updatedDate: '2026-07-04',
   },
   {
-    id: 'ENG-1151',
+    id: 'TFP-17',
     title: 'Migrate email templates to new service',
     status: 'done',
     assigneeId: 'm4',
@@ -214,7 +214,7 @@ export const jiraIssues: JiraIssue[] = [
     updatedDate: '2026-07-07',
   },
   {
-    id: 'ENG-1152',
+    id: 'TFP-18',
     title: 'Refactor checkout state machine',
     status: 'done',
     assigneeId: 'm1',
@@ -224,7 +224,7 @@ export const jiraIssues: JiraIssue[] = [
     updatedDate: '2026-07-10',
   },
   {
-    id: 'ENG-1153',
+    id: 'TFP-19',
     title: 'Add dark mode to settings page',
     status: 'done',
     assigneeId: 'm2',
@@ -234,7 +234,7 @@ export const jiraIssues: JiraIssue[] = [
     updatedDate: '2026-07-12',
   },
   {
-    id: 'ENG-1154',
+    id: 'TFP-20',
     title: 'Fix flaky integration test for login',
     status: 'done',
     assigneeId: 'm5',
@@ -246,7 +246,7 @@ export const jiraIssues: JiraIssue[] = [
 
   // --- Done, current 14-day window (Jul 15–28) ---
   {
-    id: 'ENG-1240',
+    id: 'TFP-21',
     title: 'Add CSV export for admin users',
     status: 'done',
     assigneeId: 'm3',
@@ -256,7 +256,7 @@ export const jiraIssues: JiraIssue[] = [
     updatedDate: '2026-07-19',
   },
   {
-    id: 'ENG-1241',
+    id: 'TFP-22',
     title: 'Implement webhook signature verification',
     status: 'done',
     assigneeId: 'm1',
@@ -266,7 +266,7 @@ export const jiraIssues: JiraIssue[] = [
     updatedDate: '2026-07-22',
   },
   {
-    id: 'ENG-1242',
+    id: 'TFP-23',
     title: 'Redesign settings navigation',
     status: 'done',
     assigneeId: 'm4',
@@ -276,7 +276,7 @@ export const jiraIssues: JiraIssue[] = [
     updatedDate: '2026-07-25',
   },
   {
-    id: 'ENG-1243',
+    id: 'TFP-24',
     title: 'Add retry logic for failed payments',
     status: 'done',
     assigneeId: 'm2',
@@ -286,7 +286,7 @@ export const jiraIssues: JiraIssue[] = [
     updatedDate: '2026-07-26',
   },
   {
-    id: 'ENG-1244',
+    id: 'TFP-25',
     title: 'Update onboarding checklist copy',
     status: 'done',
     assigneeId: 'm5',
@@ -301,7 +301,7 @@ export const jiraIssues: JiraIssue[] = [
 // useDeliveryGoal), this is just the first-load default.
 export const deliveryGoalSeed: DeliveryGoal = {
   text: 'Ship the Payments v2 migration end-to-end',
-  linkedIssueIds: ['ENG-1188', 'ENG-1241', 'ENG-1243'],
+  linkedIssueIds: ['TFP-11', 'TFP-22', 'TFP-24'],
 }
 
 // Simulated Slack source data, standing in for a real Slack integration.
@@ -367,7 +367,7 @@ export const slackMessages: SlackMessage[] = [
     channel: '#platform-release',
     authorName: 'Jira Bot',
     timestamp: '2026-07-23T08:00:00',
-    text: 'ENG-1188 moved to Blocked — waiting on Payments API v2 contract from Platform team.',
+    text: 'TFP-11 moved to Blocked — waiting on Payments API v2 contract from Platform team.',
     threadId: 't6',
     replyCount: 0,
   },

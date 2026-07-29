@@ -2,11 +2,12 @@ import { useCallback, useEffect, useState } from 'react'
 import type { JiraDataSource, JiraIssue, JiraIssuesResponse } from '../types'
 
 export function useJiraIssues(demoIssues: JiraIssue[]) {
-  const [issues, setIssues] = useState(demoIssues)
+  const [issues, setIssues] = useState<JiraIssue[]>([])
   const [source, setSource] = useState<JiraDataSource>('demo')
   const [projectKey, setProjectKey] = useState<string | null>(null)
   const [syncedAt, setSyncedAt] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [ready, setReady] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
@@ -40,6 +41,7 @@ export function useJiraIssues(demoIssues: JiraIssue[]) {
       )
     } finally {
       setLoading(false)
+      setReady(true)
     }
   }, [demoIssues])
 
@@ -47,5 +49,5 @@ export function useJiraIssues(demoIssues: JiraIssue[]) {
     void refresh()
   }, [refresh])
 
-  return { issues, source, projectKey, syncedAt, loading, error, refresh }
+  return { issues, source, projectKey, syncedAt, loading, ready, error, refresh }
 }
