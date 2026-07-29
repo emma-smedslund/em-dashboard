@@ -115,4 +115,5 @@ export interface ActionEntry {
   sourceInsightId?: string // present only for actions suggested from an AI Insight
   sourceInsightTitle?: string // copied from the insight at creation time so this doesn't depend on the insights list
   sourceEvidence?: string[] // rationale bullets carried over from the insight
+  linkedJiraIssueIds?: string[] // live Jira references; Jira status remains read-only in this app
 }

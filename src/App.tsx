@@ -146,6 +146,13 @@ function App() {
           <Actions
             actions={actions}
             members={teamMembers}
+            jiraIssues={jira.issues}
+            jiraDataSource={jira.source}
+            projectKey={jira.projectKey}
+            syncedAt={jira.syncedAt}
+            loadingJira={jira.loading}
+            jiraError={jira.error}
+            onRefreshJira={jira.refresh}
             onAcceptAction={acceptAction}
             onDismissAction={dismissAction}
             onCompleteAction={completeAction}

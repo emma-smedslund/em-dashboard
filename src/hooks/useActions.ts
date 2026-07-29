@@ -52,6 +52,9 @@ export function useActions(seedInsights: AIInsight[], seedActions: ActionEntry[]
       sourceInsightId: insight.id,
       sourceInsightTitle: insight.title,
       sourceEvidence: insight.sources.map((s) => s.label),
+      linkedJiraIssueIds: insight.sources
+        .filter((source) => source.type === 'jira' && source.refId)
+        .map((source) => source.refId!),
     }
 
     setActions((prev) => [action, ...prev])
@@ -114,6 +117,7 @@ export function useActions(seedInsights: AIInsight[], seedActions: ActionEntry[]
     dueDate: string | null
     priority: ActionPriority
     context: string
+    linkedJiraIssueId: string | null
   }) {
     const action: ActionEntry = {
       id: `manual-${Date.now()}`,
@@ -124,6 +128,7 @@ export function useActions(seedInsights: AIInsight[], seedActions: ActionEntry[]
       priority: input.priority,
       source: 'manual',
       context: input.context,
+      linkedJiraIssueIds: input.linkedJiraIssueId ? [input.linkedJiraIssueId] : undefined,
       createdDate: toISODate(TODAY),
     }
     setActions((prev) => [action, ...prev])

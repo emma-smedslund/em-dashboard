@@ -1,7 +1,14 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import type { ActionEntry, ActionPriority, TeamMember } from '../types'
+import type {
+  ActionEntry,
+  ActionPriority,
+  JiraDataSource,
+  JiraIssue,
+  TeamMember,
+} from '../types'
 import { formatRelativeDue, daysFromToday } from '../lib/date'
+import { getJiraStatus } from '../lib/jira'
 import { StatusPill, type StatusLevel } from './StatusPill'
 
 const PRIORITY_PILL: Record<ActionPriority, { level: StatusLevel; label: string }> = {
@@ -10,9 +17,15 @@ const PRIORITY_PILL: Record<ActionPriority, { level: StatusLevel; label: string 
   low: { level: 'neutral', label: 'Low priority' },
 }
 
-const SOURCE_PILL: Record<ActionEntry['source'], { level: StatusLevel; label: string }> = {
-  ai: { level: 'good', label: 'AI suggested' },
-  manual: { level: 'neutral', label: 'Added by you' },
+function getActionSourcePill(action: ActionEntry, jiraDataSource: JiraDataSource) {
+  if (action.source === 'manual') return { level: 'neutral' as const, label: 'Added by you' }
+  if ((action.linkedJiraIssueIds?.length ?? 0) > 0) {
+    return {
+      level: jiraDataSource === 'live' ? ('good' as const) : ('neutral' as const),
+      label: jiraDataSource === 'live' ? 'AI suggested · Live Jira' : 'AI suggested · Demo Jira',
+    }
+  }
+  return { level: 'neutral' as const, label: 'AI suggested · Demo signal' }
 }
 
 const EMPTY_MANUAL_FORM = {
@@ -21,6 +34,7 @@ const EMPTY_MANUAL_FORM = {
   dueDate: '',
   priority: 'medium' as ActionPriority,
   context: '',
+  linkedJiraIssueId: '',
 }
 
 function OwnerOptions({ members }: { members: TeamMember[] }) {
@@ -37,9 +51,69 @@ function OwnerOptions({ members }: { members: TeamMember[] }) {
   )
 }
 
+function LinkedJiraIssues({
+  action,
+  jiraIssues,
+  jiraDataSource,
+}: {
+  action: ActionEntry
+  jiraIssues: JiraIssue[]
+  jiraDataSource: JiraDataSource
+}) {
+  const linkedIds = action.linkedJiraIssueIds ?? []
+  if (linkedIds.length === 0) return null
+
+  return (
+    <div className="mt-3 rounded-md border border-[var(--border)] bg-[var(--page-plane)] p-2.5">
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+        {jiraDataSource === 'live' ? 'Live Jira issues' : 'Linked Jira issues · demo data'}
+      </p>
+      <ul className="mt-1.5 space-y-1.5">
+        {linkedIds.map((id) => {
+          const issue = jiraIssues.find((candidate) => candidate.id === id)
+          if (!issue) {
+            return (
+              <li key={id} className="text-xs text-[var(--text-muted)]">
+                {id} · Not available in the currently loaded Jira data
+              </li>
+            )
+          }
+          const status = getJiraStatus(issue)
+          return (
+            <li key={id} className="flex flex-wrap items-center justify-between gap-2">
+              {issue.url ? (
+                <a
+                  href={issue.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="min-w-0 truncate text-xs font-medium text-[var(--series-blue)] hover:underline"
+                >
+                  {issue.id} · {issue.title}
+                </a>
+              ) : (
+                <span className="min-w-0 truncate text-xs text-[var(--text-primary)]">
+                  {issue.id} · {issue.title}
+                </span>
+              )}
+              <StatusPill level={status.level} label={status.label} />
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
+
 export function Actions({
   actions,
   members,
+  jiraIssues,
+  jiraDataSource,
+  projectKey,
+  syncedAt,
+  loadingJira,
+  jiraError,
+  onRefreshJira,
   onAcceptAction,
   onDismissAction,
   onCompleteAction,
@@ -48,6 +122,13 @@ export function Actions({
 }: {
   actions: ActionEntry[]
   members: TeamMember[]
+  jiraIssues: JiraIssue[]
+  jiraDataSource: JiraDataSource
+  projectKey: string | null
+  syncedAt: string | null
+  loadingJira: boolean
+  jiraError: string | null
+  onRefreshJira: () => void
   onAcceptAction: (
     id: string,
     details: { owner: string | null; dueDate: string | null; priority: ActionPriority },
@@ -60,6 +141,7 @@ export function Actions({
     dueDate: string | null
     priority: ActionPriority
     context: string
+    linkedJiraIssueId: string | null
   }) => void
   onViewInsight?: (insightId: string) => void
 }) {
@@ -108,6 +190,7 @@ export function Actions({
       dueDate: manualForm.dueDate || null,
       priority: manualForm.priority,
       context: manualForm.context.trim(),
+      linkedJiraIssueId: manualForm.linkedJiraIssueId || null,
     })
     setManualForm(EMPTY_MANUAL_FORM)
     setShowAddForm(false)
@@ -115,6 +198,30 @@ export function Actions({
 
   return (
     <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-1)] px-3 py-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusPill
+            level={jiraDataSource === 'live' ? 'good' : 'neutral'}
+            label={jiraDataSource === 'live' ? `Live Jira · ${projectKey ?? ''}` : 'Demo Jira data'}
+          />
+          <span className="text-xs text-[var(--text-muted)]">
+            {loadingJira
+              ? 'Syncing Jira statuses…'
+              : jiraDataSource === 'live' && syncedAt
+                ? `Issue statuses synced ${new Date(syncedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+                : jiraError ?? 'Live Jira is unavailable.'}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={onRefreshJira}
+          disabled={loadingJira}
+          className="text-xs font-medium text-[var(--series-blue)] hover:underline disabled:opacity-50"
+        >
+          {loadingJira ? 'Refreshing…' : 'Refresh Jira'}
+        </button>
+      </div>
+
       <div className="rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-3 text-xs text-[var(--text-secondary)]">
         AI can surface suggested actions from patterns it detects across the team, but it
         never assigns an owner, sets a due date, or closes anything on its own. Every
@@ -138,13 +245,25 @@ export function Actions({
                   <h3 className="text-sm font-semibold text-[var(--text-primary)]">
                     {action.title}
                   </h3>
-                  <StatusPill
-                    level={PRIORITY_PILL[action.priority].level}
-                    label={PRIORITY_PILL[action.priority].label}
-                  />
+                  <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
+                    <StatusPill
+                      level={getActionSourcePill(action, jiraDataSource).level}
+                      label={getActionSourcePill(action, jiraDataSource).label}
+                    />
+                    <StatusPill
+                      level={PRIORITY_PILL[action.priority].level}
+                      label={PRIORITY_PILL[action.priority].label}
+                    />
+                  </div>
                 </div>
 
                 <p className="mt-1.5 text-sm text-[var(--text-secondary)]">{action.context}</p>
+
+                <LinkedJiraIssues
+                  action={action}
+                  jiraIssues={jiraIssues}
+                  jiraDataSource={jiraDataSource}
+                />
 
                 {action.sourceInsightTitle && (
                   <button
@@ -275,6 +394,24 @@ export function Actions({
               rows={2}
               className="w-full rounded-md border border-[var(--border)] bg-[var(--page-plane)] p-1.5 text-sm text-[var(--text-primary)]"
             />
+            <label className="block text-xs text-[var(--text-muted)]">
+              Linked Jira issue (optional)
+              <select
+                value={manualForm.linkedJiraIssueId}
+                onChange={(e) =>
+                  setManualForm((form) => ({ ...form, linkedJiraIssueId: e.target.value }))
+                }
+                disabled={loadingJira || jiraIssues.length === 0}
+                className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--page-plane)] p-1.5 text-sm text-[var(--text-primary)] disabled:opacity-50"
+              >
+                <option value="">No Jira issue linked</option>
+                {jiraIssues.map((issue) => (
+                  <option key={issue.id} value={issue.id}>
+                    {issue.id} · {issue.title}
+                  </option>
+                ))}
+              </select>
+            </label>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               <select
                 value={manualForm.owner}
@@ -325,8 +462,8 @@ export function Actions({
                   </h3>
                   <div className="flex shrink-0 gap-1.5">
                     <StatusPill
-                      level={SOURCE_PILL[action.source].level}
-                      label={SOURCE_PILL[action.source].label}
+                      level={getActionSourcePill(action, jiraDataSource).level}
+                      label={getActionSourcePill(action, jiraDataSource).label}
                     />
                     <StatusPill
                       level={PRIORITY_PILL[action.priority].level}
@@ -338,6 +475,12 @@ export function Actions({
                 {action.context && (
                   <p className="mt-1.5 text-sm text-[var(--text-secondary)]">{action.context}</p>
                 )}
+
+                <LinkedJiraIssues
+                  action={action}
+                  jiraIssues={jiraIssues}
+                  jiraDataSource={jiraDataSource}
+                />
 
                 <p className="mt-2 text-xs text-[var(--text-muted)]">
                   {action.owner ?? 'Unassigned'} ·{' '}
@@ -395,6 +538,14 @@ export function Actions({
                     {action.owner ?? 'Unassigned'}
                     {action.completedDate ? ` · Completed ${action.completedDate}` : ''}
                   </p>
+                  {(action.linkedJiraIssueIds?.length ?? 0) > 0 && (
+                    <p className="mt-1 text-xs text-[var(--text-muted)]">
+                      Jira: {action.linkedJiraIssueIds?.map((id) => {
+                        const issue = jiraIssues.find((candidate) => candidate.id === id)
+                        return issue ? `${id} · ${getJiraStatus(issue).label}` : id
+                      }).join(', ')}
+                    </p>
+                  )}
                 </div>
                 <StatusPill
                   level={action.status === 'completed' ? 'good' : 'neutral'}
