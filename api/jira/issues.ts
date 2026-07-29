@@ -2,6 +2,7 @@ type InternalStatus = 'todo' | 'in_progress' | 'blocked' | 'done'
 
 interface JiraSearchIssue {
   key: string
+  changelog?: { histories?: JiraChange[] }
   fields: {
     summary: string
     status: { name: string; statusCategory?: { key?: string } }
@@ -88,6 +89,7 @@ async function searchIssues(config: JiraConfig): Promise<JiraSearchIssue[]> {
         jql: config.jql,
         maxResults: 100,
         nextPageToken,
+        expand: 'changelog',
         fields: [
           'summary',
           'status',
@@ -110,50 +112,6 @@ async function searchIssues(config: JiraConfig): Promise<JiraSearchIssue[]> {
   } while (nextPageToken && issues.length < 500)
 
   return issues
-}
-
-async function getChangelog(config: JiraConfig, issueKey: string): Promise<JiraChange[]> {
-  const changes: JiraChange[] = []
-  let startAt = 0
-  let total = 0
-
-  do {
-    const response = await jiraFetch(
-      config,
-      `/rest/api/3/issue/${encodeURIComponent(issueKey)}/changelog?startAt=${startAt}&maxResults=100`,
-    )
-    const page = (await response.json()) as {
-      values?: JiraChange[]
-      startAt?: number
-      maxResults?: number
-      total?: number
-    }
-    const values = page.values ?? []
-    changes.push(...values)
-    total = page.total ?? changes.length
-    startAt = (page.startAt ?? startAt) + (page.maxResults ?? values.length)
-  } while (startAt < total)
-
-  return changes.sort((a, b) => a.created.localeCompare(b.created))
-}
-
-async function mapWithConcurrency<T, R>(
-  values: T[],
-  limit: number,
-  mapper: (value: T) => Promise<R>,
-): Promise<R[]> {
-  const results = new Array<R>(values.length)
-  let cursor = 0
-
-  async function worker() {
-    while (cursor < values.length) {
-      const index = cursor++
-      results[index] = await mapper(values[index])
-    }
-  }
-
-  await Promise.all(Array.from({ length: Math.min(limit, values.length) }, () => worker()))
-  return results
 }
 
 function mapStatus(name: string, category?: string): InternalStatus {
@@ -217,8 +175,10 @@ function dependencies(issue: JiraSearchIssue, projectKey: string) {
   }
 }
 
-async function normalizeIssue(config: JiraConfig, issue: JiraSearchIssue) {
-  const changes = await getChangelog(config, issue.key)
+function normalizeIssue(config: JiraConfig, issue: JiraSearchIssue) {
+  const changes = [...(issue.changelog?.histories ?? [])].sort((a, b) =>
+    a.created.localeCompare(b.created),
+  )
   const status = mapStatus(issue.fields.status.name, issue.fields.status.statusCategory?.key)
   const dependency = dependencies(issue, config.projectKey)
 
@@ -253,7 +213,7 @@ export default async function handler(request: Request): Promise<Response> {
   try {
     const config = getConfig()
     const rawIssues = await searchIssues(config)
-    const issues = await mapWithConcurrency(rawIssues, 5, (issue) => normalizeIssue(config, issue))
+    const issues = rawIssues.map((issue) => normalizeIssue(config, issue))
 
     return Response.json(
       { issues, projectKey: config.projectKey, syncedAt: new Date().toISOString() },
