@@ -32,6 +32,16 @@ interface JiraConfig {
   jql: string
 }
 
+interface ApiRequest {
+  method?: string
+}
+
+interface ApiResponse {
+  status(code: number): ApiResponse
+  setHeader(name: string, value: string): void
+  json(body: unknown): void
+}
+
 function getConfig(): JiraConfig {
   const baseUrl = process.env.JIRA_BASE_URL?.replace(/\/$/, '')
   const projectKey = process.env.JIRA_PROJECT_KEY
@@ -253,9 +263,10 @@ function normalizeIssue(config: JiraConfig, issue: JiraSearchIssue, changes: Jir
   }
 }
 
-export default async function handler(request: Request): Promise<Response> {
+export default async function handler(request: ApiRequest, response: ApiResponse): Promise<void> {
   if (request.method !== 'GET') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 })
+    response.status(405).json({ error: 'Method not allowed' })
+    return
   }
 
   try {
@@ -266,12 +277,14 @@ export default async function handler(request: Request): Promise<Response> {
       normalizeIssue(config, issue, changelogs.get(issue.id) ?? []),
     )
 
-    return Response.json(
-      { issues, projectKey: config.projectKey, syncedAt: new Date().toISOString() },
-      { headers: { 'Cache-Control': 'private, no-store' } },
-    )
+    response.setHeader('Cache-Control', 'private, no-store')
+    response.status(200).json({
+      issues,
+      projectKey: config.projectKey,
+      syncedAt: new Date().toISOString(),
+    })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Could not load Jira issues'
-    return Response.json({ error: message }, { status: 502 })
+    response.status(502).json({ error: message })
   }
 }
