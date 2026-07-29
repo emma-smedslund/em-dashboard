@@ -13,6 +13,10 @@ function stableId(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
 }
 
+function blockedDuration(days: number) {
+  return days === 0 ? 'blocked today' : `blocked for ${days} ${plural(days, 'day')}`
+}
+
 function issueEvidence(issue: JiraIssue, detail: string) {
   return {
     type: 'jira' as const,
@@ -56,7 +60,7 @@ export function generateJiraInsights(issues: JiraIssue[], referenceDate = new Da
       sources: group.map((issue) =>
         issueEvidence(
           issue,
-          `blocked for ${daysBetween(issue.blockedSince ?? issue.updatedDate, today)} days: ${dependency}`,
+          `${blockedDuration(daysBetween(issue.blockedSince ?? issue.updatedDate, today))}: ${dependency}`,
         ),
       ),
       confidence: group.length >= 3 ? 'high' : 'medium',
@@ -78,9 +82,9 @@ export function generateJiraInsights(issues: JiraIssue[], referenceDate = new Da
     insights.push({
       id: `jira-blocked-${issue.id.toLowerCase()}`,
       category: 'delivery_risk',
-      title: `${issue.id} has been blocked for ${days} ${plural(days, 'day')}`,
+      title: `${issue.id} is ${blockedDuration(days)}`,
       summary: `${issue.title} is still blocked${issue.blockedReason ? `: ${issue.blockedReason}` : ''}.`,
-      sources: [issueEvidence(issue, `${issue.blockedReason ?? 'Blocked in Jira'} for ${days} days`)],
+      sources: [issueEvidence(issue, `${issue.blockedReason ?? 'Blocked in Jira'} · ${blockedDuration(days)}`)],
       confidence: days >= 5 ? 'high' : 'medium',
       recommendedAction: `Confirm the unblock owner and next step for ${issue.id}`,
       status: 'new',
