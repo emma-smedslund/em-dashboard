@@ -105,8 +105,7 @@ export function getCycleTimeStats(
 }
 
 export interface GoalProgressItem {
-  id: string
-  title: string
+  issue: JiraIssue
   done: boolean
 }
 
@@ -121,11 +120,72 @@ export function getGoalProgress(goal: DeliveryGoal, issues: JiraIssue[]): GoalPr
   const items = goal.linkedIssueIds
     .map((id) => issues.find((i) => i.id === id))
     .filter((i): i is JiraIssue => !!i)
-    .map((issue) => ({ id: issue.id, title: issue.title, done: issue.status === 'done' }))
+    .map((issue) => ({ issue, done: issue.status === 'done' }))
 
   const doneCount = items.filter((i) => i.done).length
   const totalCount = items.length
   const percent = totalCount === 0 ? 0 : Math.round((doneCount / totalCount) * 100)
 
   return { items, doneCount, totalCount, percent }
+}
+
+export type GoalHealthLevel = 'completed' | 'blocked' | 'at_risk' | 'on_track' | 'not_enough_data'
+
+export interface GoalHealth {
+  level: GoalHealthLevel
+  label: string
+  explanation: string
+}
+
+export function getGoalHealth(
+  progress: GoalProgress,
+  staleIssueIds: Set<string>,
+): GoalHealth {
+  if (progress.totalCount === 0) {
+    return {
+      level: 'not_enough_data',
+      label: 'Not enough data',
+      explanation: 'Link Jira issues to assess delivery health.',
+    }
+  }
+  if (progress.doneCount === progress.totalCount) {
+    return {
+      level: 'completed',
+      label: 'Completed',
+      explanation: 'All linked issues are complete.',
+    }
+  }
+
+  const blockedCount = progress.items.filter(({ issue }) => issue.status === 'blocked').length
+  if (blockedCount > 0) {
+    return {
+      level: 'blocked',
+      label: 'Blocked',
+      explanation: `${blockedCount} linked ${blockedCount === 1 ? 'issue is' : 'issues are'} blocked.`,
+    }
+  }
+
+  const staleCount = progress.items.filter(({ issue }) => staleIssueIds.has(issue.id)).length
+  if (staleCount > 0) {
+    return {
+      level: 'at_risk',
+      label: 'At risk',
+      explanation: `${staleCount} unfinished ${staleCount === 1 ? 'issue has' : 'issues have'} had no activity for at least 5 days.`,
+    }
+  }
+
+  const startedCount = progress.items.filter(({ issue }) => issue.status !== 'todo').length
+  if (startedCount === 0 && progress.totalCount > 1) {
+    return {
+      level: 'at_risk',
+      label: 'At risk',
+      explanation: `None of the ${progress.totalCount} linked issues has started.`,
+    }
+  }
+
+  return {
+    level: 'on_track',
+    label: 'On track',
+    explanation: `${progress.totalCount - progress.doneCount} linked ${progress.totalCount - progress.doneCount === 1 ? 'issue remains' : 'issues remain'}, with no blockers or stale work.`,
+  }
 }

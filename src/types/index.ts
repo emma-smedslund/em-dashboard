@@ -26,6 +26,7 @@ export interface JiraIssue {
   id: string // e.g. 'ENG-1190'
   title: string
   status: 'todo' | 'in_progress' | 'blocked' | 'done'
+  statusName?: string // exact Jira workflow status, e.g. "In Review"
   assigneeId: string
   assigneeName?: string // populated by live Jira; demo data resolves names via teamMembers
   epic: string

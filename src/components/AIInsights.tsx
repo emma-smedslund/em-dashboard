@@ -8,6 +8,7 @@ import type {
   TeamMember,
   InsightCategory,
 } from '../types'
+import { getJiraStatus } from '../lib/jira'
 import { StatusPill } from './StatusPill'
 
 const CONFIDENCE_PILL = {
@@ -21,13 +22,6 @@ const CATEGORY_LABEL: Record<InsightCategory, string> = {
   recurring_issue: 'Recurring issue',
   unresolved_question: 'Unresolved question',
   possible_overload: 'Possible overload',
-}
-
-const JIRA_STATUS_LABEL: Record<JiraIssue['status'], string> = {
-  todo: 'To do',
-  in_progress: 'In progress',
-  blocked: 'Blocked',
-  done: 'Done',
 }
 
 // Date-only strings (e.g. JiraIssue.updatedDate) need a local-midnight
@@ -65,7 +59,7 @@ function SourceCard({
           <p className="text-xs text-[var(--text-secondary)]">
             {issue.status === 'blocked' && issue.blockedReason
               ? `Blocked: ${issue.blockedReason}`
-              : JIRA_STATUS_LABEL[issue.status]}
+              : getJiraStatus(issue).label}
           </p>
           <p className="text-xs text-[var(--text-muted)]">
             {assignee?.name ?? 'Unassigned'} · Updated {formatShortDate(issue.updatedDate)}

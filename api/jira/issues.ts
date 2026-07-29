@@ -244,6 +244,7 @@ function normalizeIssue(config: JiraConfig, issue: JiraSearchIssue, changes: Jir
     id: issue.key,
     title: issue.fields.summary,
     status,
+    statusName: issue.fields.status.name,
     assigneeId: issue.fields.assignee?.accountId ?? 'unassigned',
     assigneeName: issue.fields.assignee?.displayName ?? 'Unassigned',
     epic: issue.fields.parent?.fields?.summary ?? '',

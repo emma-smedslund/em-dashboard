@@ -18,7 +18,7 @@ import {
   slackMessages,
   deliveryGoalSeed,
 } from './data/mockData'
-import { TODAY, formatAsOf } from './lib/date'
+import { formatAsOf } from './lib/date'
 
 const TABS = [
   {
@@ -80,7 +80,7 @@ function App() {
           </p>
         </div>
         <p className="text-sm text-[var(--text-muted)]">
-          As of {formatAsOf(TODAY)}
+          As of {formatAsOf(new Date())}
         </p>
       </header>
 
@@ -142,7 +142,7 @@ function App() {
       </section>
 
       <footer className="mt-8 text-center text-xs text-[var(--text-muted)]">
-        Demo data is used to illustrate how signals from engineering tools can be
+        Some demo data is used to illustrate how signals from engineering tools can be
         consolidated and translated into actionable leadership insights.
       </footer>
 
