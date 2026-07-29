@@ -65,6 +65,7 @@ function safeSlackApiError(error?: string): SlackIntegrationError {
 
 export async function callSlackApi<T extends { ok?: boolean; error?: string }>(
   method: string,
+  parameters?: URLSearchParams,
 ): Promise<T> {
   const token = getBotToken()
   let response: Response
@@ -78,6 +79,7 @@ export async function callSlackApi<T extends { ok?: boolean; error?: string }>(
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
+      body: parameters,
     })
   } catch (error) {
     if (error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError')) {
