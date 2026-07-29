@@ -15,6 +15,17 @@ export function useActions(seedInsights: AIInsight[], seedActions: ActionEntry[]
   const [actions, setActions] = useState(seedActions)
   const [confirmation, setConfirmation] = useState<string | null>(null)
 
+  // Jira-derived insights can change after the live request or a refresh.
+  // Keep the EM's decision state while refreshing the generated content.
+  useEffect(() => {
+    setInsights((current) =>
+      seedInsights.map((incoming) => ({
+        ...incoming,
+        status: current.find((existing) => existing.id === incoming.id)?.status ?? incoming.status,
+      })),
+    )
+  }, [seedInsights])
+
   useEffect(() => {
     if (!confirmation) return
     const timer = setTimeout(() => setConfirmation(null), CONFIRMATION_DURATION_MS)

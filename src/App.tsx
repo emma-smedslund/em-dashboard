@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { TeamHealthPulse } from './components/TeamHealthPulse'
 import { DeliveryRadar } from './components/DeliveryRadar'
 import { ActionTracker } from './components/ActionTracker'
@@ -18,7 +18,8 @@ import {
   slackMessages,
   deliveryGoalSeed,
 } from './data/mockData'
-import { formatAsOf } from './lib/date'
+import { formatAsOf, TODAY } from './lib/date'
+import { generateJiraInsights } from './lib/jiraInsights'
 
 const TABS = [
   {
@@ -50,9 +51,23 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]['id']
 
+const DEMO_INSIGHTS = aiInsights.filter(
+  (insight) => !insight.sources.some((source) => source.type === 'jira'),
+)
+
 function App() {
   const [activeTab, setActiveTab] = useState<TabId>('delivery')
   const active = TABS.find((tab) => tab.id === activeTab)!
+  const { goal, setText, linkIssue, unlinkIssue } = useDeliveryGoal(deliveryGoalSeed)
+  const jira = useJiraIssues(demoJiraIssues)
+  const generatedJiraInsights = useMemo(
+    () => generateJiraInsights(jira.issues, jira.source === 'live' ? new Date() : TODAY),
+    [jira.issues, jira.source],
+  )
+  const insightSeed = useMemo(
+    () => [...generatedJiraInsights, ...DEMO_INSIGHTS],
+    [generatedJiraInsights],
+  )
   const {
     insights,
     actions,
@@ -64,9 +79,7 @@ function App() {
     addManualAction,
     confirmation,
     clearConfirmation,
-  } = useActions(aiInsights, actionEntries)
-  const { goal, setText, linkIssue, unlinkIssue } = useDeliveryGoal(deliveryGoalSeed)
-  const jira = useJiraIssues(demoJiraIssues)
+  } = useActions(insightSeed, actionEntries)
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -114,10 +127,17 @@ function App() {
         {activeTab === 'insights' && (
           <AIInsights
             insights={insights}
-            jiraIssues={demoJiraIssues}
+            jiraIssues={jira.issues}
             slackMessages={slackMessages}
             healthEntries={healthEntries}
             members={teamMembers}
+            jiraDataSource={jira.source}
+            projectKey={jira.projectKey}
+            syncedAt={jira.syncedAt}
+            loading={jira.loading}
+            error={jira.error}
+            jiraInsightCount={generatedJiraInsights.length}
+            onRefreshJira={jira.refresh}
             onAddToActions={suggestActionFromInsight}
             onDismiss={dismissInsight}
           />

@@ -7,6 +7,7 @@ import type {
   HealthEntry,
   TeamMember,
   InsightCategory,
+  JiraDataSource,
 } from '../types'
 import { getJiraStatus } from '../lib/jira'
 import { StatusPill } from './StatusPill'
@@ -37,12 +38,14 @@ function SourceCard({
   slackMessages,
   healthEntries,
   members,
+  jiraDataSource,
 }: {
   source: InsightSource
   jiraIssues: JiraIssue[]
   slackMessages: SlackMessage[]
   healthEntries: HealthEntry[]
   members: TeamMember[]
+  jiraDataSource: JiraDataSource
 }) {
   if (source.type === 'jira') {
     const issue = jiraIssues.find((i) => i.id === source.refId)
@@ -51,18 +54,29 @@ function SourceCard({
       return (
         <>
           <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
-            Jira
+            {jiraDataSource === 'live' ? 'Live Jira' : 'Demo Jira'}
           </p>
-          <p className="text-xs font-medium text-[var(--text-primary)]">
-            {issue.id} · {issue.title}
-          </p>
+          {issue.url ? (
+            <a
+              href={issue.url}
+              target="_blank"
+              rel="noreferrer"
+              className="text-xs font-medium text-[var(--series-blue)] hover:underline"
+            >
+              {issue.id} · {issue.title}
+            </a>
+          ) : (
+            <p className="text-xs font-medium text-[var(--text-primary)]">
+              {issue.id} · {issue.title}
+            </p>
+          )}
           <p className="text-xs text-[var(--text-secondary)]">
             {issue.status === 'blocked' && issue.blockedReason
               ? `Blocked: ${issue.blockedReason}`
               : getJiraStatus(issue).label}
           </p>
           <p className="text-xs text-[var(--text-muted)]">
-            {assignee?.name ?? 'Unassigned'} · Updated {formatShortDate(issue.updatedDate)}
+            {issue.assigneeName ?? assignee?.name ?? 'Unassigned'} · Updated {formatShortDate(issue.updatedDate)}
           </p>
         </>
       )
@@ -75,7 +89,7 @@ function SourceCard({
       return (
         <>
           <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
-            Slack
+            Demo Slack
           </p>
           <p className="text-xs text-[var(--text-muted)]">
             {message.channel} · {message.authorName} · {formatShortDate(message.timestamp)}
@@ -99,7 +113,7 @@ function SourceCard({
       return (
         <>
           <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
-            Team Health Pulse
+            Demo Team Pulse
           </p>
           <p className="text-xs font-medium text-[var(--text-primary)]">{member.name}</p>
           <p className="text-xs text-[var(--text-secondary)]">
@@ -114,7 +128,7 @@ function SourceCard({
   return (
     <>
       <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
-        Delivery Radar
+        Demo delivery signal
       </p>
       <p className="text-xs text-[var(--text-secondary)]">{source.label}</p>
     </>
@@ -127,6 +141,13 @@ export function AIInsights({
   slackMessages,
   healthEntries,
   members,
+  jiraDataSource,
+  projectKey,
+  syncedAt,
+  loading,
+  error,
+  jiraInsightCount,
+  onRefreshJira,
   onAddToActions,
   onDismiss,
 }: {
@@ -135,6 +156,13 @@ export function AIInsights({
   slackMessages: SlackMessage[]
   healthEntries: HealthEntry[]
   members: TeamMember[]
+  jiraDataSource: JiraDataSource
+  projectKey: string | null
+  syncedAt: string | null
+  loading: boolean
+  error: string | null
+  jiraInsightCount: number
+  onRefreshJira: () => void
   onAddToActions: (insightId: string) => void
   onDismiss: (insightId: string) => void
 }) {
@@ -150,7 +178,39 @@ export function AIInsights({
   }
 
   return (
-    <ul className="space-y-3">
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-1)] px-3 py-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusPill
+            level={jiraDataSource === 'live' ? 'good' : 'neutral'}
+            label={jiraDataSource === 'live' ? `Live Jira · ${projectKey ?? ''}` : 'Demo Jira data'}
+          />
+          <StatusPill level="neutral" label="Demo Slack + Team Pulse" />
+          <span className="text-xs text-[var(--text-muted)]">
+            {loading
+              ? 'Analyzing Jira signals…'
+              : jiraDataSource === 'live' && syncedAt
+                ? `${jiraInsightCount} Jira ${jiraInsightCount === 1 ? 'insight' : 'insights'} · synced ${new Date(syncedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+                : error ?? 'Live Jira is unavailable.'}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={onRefreshJira}
+          disabled={loading}
+          className="text-xs font-medium text-[var(--series-blue)] hover:underline disabled:opacity-50"
+        >
+          {loading ? 'Refreshing…' : 'Refresh Jira'}
+        </button>
+      </div>
+
+      {!loading && jiraInsightCount === 0 && (
+        <p className="rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-3 text-sm text-[var(--text-muted)]">
+          No Jira risk patterns were detected in the currently loaded issues.
+        </p>
+      )}
+
+      <ul className="space-y-3">
       {insights.map((insight) => {
         const confidence = CONFIDENCE_PILL[insight.confidence]
         const isExpanded = expandedIds.has(insight.id)
@@ -199,6 +259,7 @@ export function AIInsights({
                       slackMessages={slackMessages}
                       healthEntries={healthEntries}
                       members={members}
+                      jiraDataSource={jiraDataSource}
                     />
                   </li>
                 ))}
@@ -234,6 +295,7 @@ export function AIInsights({
           </li>
         )
       })}
-    </ul>
+      </ul>
+    </div>
   )
 }
