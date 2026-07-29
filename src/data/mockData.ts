@@ -17,11 +17,11 @@ import type {
 //                      is architecturally different from the other two)
 
 export const teamMembers: TeamMember[] = [
-  { id: 'm1', name: 'Priya Nair', initials: 'PN', role: 'Senior Engineer' },
+  { id: 'm1', name: 'Freya', initials: 'F', role: 'Software Engineer' },
   { id: 'm2', name: 'Daniel Osei', initials: 'DO', role: 'Engineer' },
   { id: 'm3', name: 'Wei Zhang', initials: 'WZ', role: 'Engineer' },
-  { id: 'm4', name: 'Sofia Ramirez', initials: 'SR', role: 'Senior Engineer' },
-  { id: 'm5', name: 'Jonas Berg', initials: 'JB', role: 'Engineer (new hire)' },
+  { id: 'm4', name: 'Emma', initials: 'E', role: 'Engineering Manager' },
+  { id: 'm5', name: 'Leo', initials: 'L', role: 'Software Engineer' },
 ]
 
 // Simulated Jira source data — a kanban board's worth of tickets, standing
@@ -85,7 +85,7 @@ export const jiraIssues: JiraIssue[] = [
     epic: 'Design System v2',
     updatedDate: '2026-07-26',
   },
-  // Jonas is carrying five concurrent tickets — the High WIP example.
+  // Leo is carrying five concurrent tickets — the High WIP example.
   {
     id: 'ENG-1230',
     title: 'Fix pagination bug in admin table',
@@ -338,7 +338,7 @@ export const slackMessages: SlackMessage[] = [
   {
     id: 's2',
     channel: '#platform-release',
-    authorName: 'Sofia Ramirez',
+    authorName: 'Emma',
     timestamp: '2026-07-18T14:05:00',
     text: 'Prod deploy got stuck on the migration step for ~10 min before it went through.',
     threadId: 't2',
@@ -356,7 +356,7 @@ export const slackMessages: SlackMessage[] = [
   {
     id: 's4',
     channel: '#platform-release',
-    authorName: 'Priya Nair',
+    authorName: 'Freya',
     timestamp: '2026-07-27T16:20:00',
     text: 'Deploy pipeline timed out on staging again — this is the fourth time this sprint.',
     threadId: 't4',
@@ -374,7 +374,7 @@ export const slackMessages: SlackMessage[] = [
   {
     id: 's5',
     channel: '#platform-help',
-    authorName: 'Jonas Berg',
+    authorName: 'Leo',
     timestamp: '2026-07-25T10:00:00',
     text: 'Quick question — who owns the on-call escalation runbook now that Alex has left the team?',
     threadId: 't5',
@@ -435,7 +435,7 @@ export const aiInsights: AIInsight[] = [
       {
         type: 'slack',
         refId: 's2',
-        label: '#platform-release, Sofia Ramirez, Jul 18 — prod deploy stuck on migration step',
+        label: '#platform-release, Emma, Jul 18 — prod deploy stuck on migration step',
       },
       {
         type: 'slack',
@@ -445,7 +445,7 @@ export const aiInsights: AIInsight[] = [
       {
         type: 'slack',
         refId: 's4',
-        label: '#platform-release, Priya Nair, Jul 27 — fourth occurrence this sprint',
+        label: '#platform-release, Freya, Jul 27 — fourth occurrence this sprint',
       },
     ],
     confidence: 'high',
@@ -457,13 +457,13 @@ export const aiInsights: AIInsight[] = [
     category: 'unresolved_question',
     title: 'A question about on-call ownership has gone unanswered for three days',
     summary:
-      'Jonas asked who owns the on-call escalation runbook after Alex left the team — no one has replied in #platform-help since Jul 25.',
+      'Leo asked who owns the on-call escalation runbook after Alex left the team — no one has replied in #platform-help since Jul 25.',
     sources: [
       {
         type: 'slack',
         refId: 's5',
         label:
-          '#platform-help, Jonas Berg, Jul 25 — "who owns the on-call escalation runbook now that Alex has left?" (0 replies)',
+          '#platform-help, Leo, Jul 25 — "who owns the on-call escalation runbook now that Alex has left?" (0 replies)',
       },
     ],
     confidence: 'medium',
@@ -515,7 +515,7 @@ export const actionEntries: ActionEntry[] = [
     id: 'action-i6',
     title: 'Review initiative load and reprioritize with the team before adding new work',
     status: 'active',
-    owner: 'Priya Nair',
+    owner: 'Freya',
     dueDate: '2026-07-31',
     priority: 'medium',
     source: 'ai',
@@ -531,13 +531,13 @@ export const actionEntries: ActionEntry[] = [
   },
   {
     id: 'action-onboarding',
-    title: 'Set up an onboarding buddy pairing for Jonas',
+    title: 'Set up an onboarding buddy pairing for Leo',
     status: 'active',
-    owner: 'Sofia Ramirez',
+    owner: 'Emma',
     dueDate: '2026-08-03',
     priority: 'medium',
     source: 'manual',
-    context: "Jonas joined three weeks ago and doesn't have a designated buddy yet.",
+    context: "Leo joined three weeks ago and doesn't have a designated buddy yet.",
     createdDate: '2026-07-20',
   },
   {
