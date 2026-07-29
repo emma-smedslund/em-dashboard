@@ -10,7 +10,7 @@ import {
   getGoalHealth,
 } from '../lib/delivery'
 import { StatusPill } from './StatusPill'
-import { TODAY } from '../lib/date'
+import { DEMO_REFERENCE_DATE } from '../lib/date'
 import { getJiraStatus, normalizeJiraIssueKey } from '../lib/jira'
 
 const STALE_THRESHOLD_DAYS = 5
@@ -75,7 +75,7 @@ export function DeliveryRadar({
     )
   }
 
-  const referenceDate = dataSource === 'live' ? new Date() : TODAY
+  const referenceDate = dataSource === 'live' ? new Date() : DEMO_REFERENCE_DATE
   const progress = getGoalProgress(goal, issues)
   const blocked = getBlockedIssues(issues, referenceDate)
   const stale = getStaleIssues(issues, STALE_THRESHOLD_DAYS, referenceDate)
@@ -362,7 +362,7 @@ export function DeliveryRadar({
           </p>
         ) : (
           <ul className="space-y-2">
-            {stale.map(({ issue, daysBlocked }) => (
+            {stale.map(({ issue, daysStale }) => (
               <li
                 key={issue.id}
                 className="flex items-center justify-between gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-3"
@@ -384,7 +384,7 @@ export function DeliveryRadar({
                   )}
                   <p className="text-xs text-[var(--text-muted)]">{memberName(issue.assigneeId)}</p>
                 </div>
-                <StatusPill level="warning" label={`No activity in ${daysBlocked} days`} />
+                <StatusPill level="warning" label={`No activity in ${daysStale} days`} />
               </li>
             ))}
           </ul>
@@ -406,7 +406,10 @@ export function DeliveryRadar({
                   <p className="text-sm text-[var(--text-primary)]">
                     {issue.id} · {issue.title}
                   </p>
-                  <StatusPill level="critical" label={`${daysBlocked} days`} />
+                  <StatusPill
+                    level="critical"
+                    label={daysBlocked === null ? 'Duration unavailable' : `${daysBlocked} days`}
+                  />
                 </div>
                 <p className="mt-1 text-xs text-[var(--text-muted)]">
                   {issue.blockedReason} · {memberName(issue.assigneeId)}

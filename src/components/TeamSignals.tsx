@@ -39,7 +39,7 @@ export function TeamSignals({
 }: {
   signals: TeamSignal[]
   jiraIssues: JiraIssue[]
-  onCreateAction: (signal: TeamSignal) => void
+  onCreateAction: (signal: TeamSignal) => boolean
   onSetStatus: (id: string, status: TeamSignalStatus) => void
 }) {
   const [category, setCategory] = useState<FilterValue<TeamSignalCategory>>('All')
@@ -60,8 +60,7 @@ export function TeamSignals({
   }
 
   function createAction(signal: TeamSignal) {
-    onCreateAction(signal)
-    updateStatus(signal.id, 'Acknowledged')
+    if (onCreateAction(signal)) updateStatus(signal.id, 'Acknowledged')
   }
 
   const counts = TEAM_SIGNAL_STATUSES.map((signalStatus) => ({

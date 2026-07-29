@@ -1,8 +1,63 @@
 import { useEffect, useState } from 'react'
 import type { AIInsight, ActionEntry, ActionPriority, TeamSignal } from '../types'
-import { TODAY, toISODate } from '../lib/date'
+import { toISODate } from '../lib/date'
+import { readStoredJson, writeStoredJson } from '../lib/storage'
 
 const CONFIRMATION_DURATION_MS = 4000
+const STORAGE_KEY = 'em-dashboard:actions-and-insight-decisions'
+const STORAGE_VERSION = 1
+
+type InsightDecision = Extract<AIInsight['status'], 'accepted' | 'dismissed'>
+
+interface StoredActionState {
+  version: 1
+  actions: ActionEntry[]
+  insightDecisions: Partial<Record<string, InsightDecision>>
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function isNullableString(value: unknown): value is string | null {
+  return value === null || typeof value === 'string'
+}
+
+function isActionEntry(value: unknown): value is ActionEntry {
+  if (!isRecord(value)) return false
+  return (
+    typeof value.id === 'string' &&
+    typeof value.title === 'string' &&
+    ['suggested', 'active', 'completed', 'dismissed'].includes(String(value.status)) &&
+    isNullableString(value.owner) &&
+    isNullableString(value.dueDate) &&
+    ['low', 'medium', 'high'].includes(String(value.priority)) &&
+    ['ai', 'signal', 'manual'].includes(String(value.source)) &&
+    typeof value.context === 'string' &&
+    typeof value.createdDate === 'string'
+  )
+}
+
+function loadStoredState(seedActions: ActionEntry[]): StoredActionState {
+  const stored = readStoredJson(STORAGE_KEY)
+  if (
+    !isRecord(stored) ||
+    stored.version !== STORAGE_VERSION ||
+    !Array.isArray(stored.actions) ||
+    !stored.actions.every(isActionEntry) ||
+    !isRecord(stored.insightDecisions)
+  ) {
+    return { version: STORAGE_VERSION, actions: seedActions, insightDecisions: {} }
+  }
+
+  const insightDecisions = Object.fromEntries(
+    Object.entries(stored.insightDecisions).filter(
+      (entry): entry is [string, InsightDecision] =>
+        entry[1] === 'accepted' || entry[1] === 'dismissed',
+    ),
+  )
+  return { version: STORAGE_VERSION, actions: stored.actions, insightDecisions }
+}
 
 const CONFIDENCE_TO_PRIORITY: Record<AIInsight['confidence'], ActionPriority> = {
   high: 'high',
@@ -17,8 +72,15 @@ const SIGNAL_TO_PRIORITY: Record<TeamSignal['severity'], ActionPriority> = {
 }
 
 export function useActions(seedInsights: AIInsight[], seedActions: ActionEntry[]) {
-  const [insights, setInsights] = useState(seedInsights)
-  const [actions, setActions] = useState(seedActions)
+  const [storedState] = useState(() => loadStoredState(seedActions))
+  const [insightDecisions, setInsightDecisions] = useState(storedState.insightDecisions)
+  const [insights, setInsights] = useState(() =>
+    seedInsights.map((insight) => ({
+      ...insight,
+      status: storedState.insightDecisions[insight.id] ?? insight.status,
+    })),
+  )
+  const [actions, setActions] = useState(storedState.actions)
   const [confirmation, setConfirmation] = useState<string | null>(null)
 
   // Jira-derived insights can change after the live request or a refresh.
@@ -27,10 +89,21 @@ export function useActions(seedInsights: AIInsight[], seedActions: ActionEntry[]
     setInsights((current) =>
       seedInsights.map((incoming) => ({
         ...incoming,
-        status: current.find((existing) => existing.id === incoming.id)?.status ?? incoming.status,
+        status:
+          insightDecisions[incoming.id] ??
+          current.find((existing) => existing.id === incoming.id)?.status ??
+          incoming.status,
       })),
     )
-  }, [seedInsights])
+  }, [seedInsights, insightDecisions])
+
+  useEffect(() => {
+    writeStoredJson(STORAGE_KEY, {
+      version: STORAGE_VERSION,
+      actions,
+      insightDecisions,
+    } satisfies StoredActionState)
+  }, [actions, insightDecisions])
 
   useEffect(() => {
     if (!confirmation) return
@@ -54,7 +127,7 @@ export function useActions(seedInsights: AIInsight[], seedActions: ActionEntry[]
       priority: CONFIDENCE_TO_PRIORITY[insight.confidence],
       source: 'ai',
       context: insight.summary,
-      createdDate: toISODate(TODAY),
+      createdDate: toISODate(new Date()),
       sourceInsightId: insight.id,
       sourceInsightTitle: insight.title,
       sourceEvidence: insight.sources.map((s) => s.label),
@@ -67,6 +140,7 @@ export function useActions(seedInsights: AIInsight[], seedActions: ActionEntry[]
     setInsights((prev) =>
       prev.map((i) => (i.id === insightId ? { ...i, status: 'accepted' } : i)),
     )
+    setInsightDecisions((current) => ({ ...current, [insightId]: 'accepted' }))
     setConfirmation(`Sent to Actions: "${action.title}"`)
   }
 
@@ -78,12 +152,13 @@ export function useActions(seedInsights: AIInsight[], seedActions: ActionEntry[]
           : i,
       ),
     )
+    setInsightDecisions((current) => ({ ...current, [insightId]: 'dismissed' }))
   }
 
-  function suggestActionFromSignal(signal: TeamSignal) {
+  function suggestActionFromSignal(signal: TeamSignal): boolean {
     if (actions.some((action) => action.sourceSignalId === signal.id)) {
       setConfirmation('This signal already has an action')
-      return
+      return false
     }
     const action: ActionEntry = {
       id: `action-${signal.id}`,
@@ -94,7 +169,7 @@ export function useActions(seedInsights: AIInsight[], seedActions: ActionEntry[]
       priority: SIGNAL_TO_PRIORITY[signal.severity],
       source: 'signal',
       context: signal.summary,
-      createdDate: toISODate(TODAY),
+      createdDate: toISODate(new Date()),
       sourceSignalId: signal.id,
       sourceSignalTitle: signal.title,
       sourceEvidence: signal.evidence.map((item) => item.label),
@@ -104,6 +179,7 @@ export function useActions(seedInsights: AIInsight[], seedActions: ActionEntry[]
     }
     setActions((current) => [action, ...current])
     setConfirmation(`Sent to Actions: "${action.title}"`)
+    return true
   }
 
   // The moment a suggestion becomes a real, owned, scheduled action — the
@@ -136,7 +212,7 @@ export function useActions(seedInsights: AIInsight[], seedActions: ActionEntry[]
     setActions((prev) =>
       prev.map((a) =>
         a.id === actionId && a.status === 'active'
-          ? { ...a, status: 'completed', completedDate: toISODate(TODAY) }
+          ? { ...a, status: 'completed', completedDate: toISODate(new Date()) }
           : a,
       ),
     )
@@ -161,7 +237,7 @@ export function useActions(seedInsights: AIInsight[], seedActions: ActionEntry[]
       source: 'manual',
       context: input.context,
       linkedJiraIssueIds: input.linkedJiraIssueId ? [input.linkedJiraIssueId] : undefined,
-      createdDate: toISODate(TODAY),
+      createdDate: toISODate(new Date()),
     }
     setActions((prev) => [action, ...prev])
     setConfirmation(`Action added: "${action.title}"`)

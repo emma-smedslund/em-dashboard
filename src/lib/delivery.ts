@@ -1,5 +1,5 @@
 import type { JiraIssue, TeamMember, DeliveryGoal } from '../types'
-import { TODAY, toISODate, daysBetween } from './date'
+import { DEMO_REFERENCE_DATE, toISODate, daysBetween } from './date'
 
 const HIGH_WIP_THRESHOLD = 3
 
@@ -11,26 +11,34 @@ function median(values: number[]): number {
 
 export interface BlockedIssueView {
   issue: JiraIssue
-  daysBlocked: number
+  daysBlocked: number | null
 }
 
-export function getBlockedIssues(issues: JiraIssue[], referenceDate = TODAY): BlockedIssueView[] {
+export function getBlockedIssues(
+  issues: JiraIssue[],
+  referenceDate = DEMO_REFERENCE_DATE,
+): BlockedIssueView[] {
   return issues
-    .filter((i): i is JiraIssue & { blockedSince: string } => i.status === 'blocked' && !!i.blockedSince)
-    .map((issue) => ({ issue, daysBlocked: daysBetween(issue.blockedSince, toISODate(referenceDate)) }))
-    .sort((a, b) => b.daysBlocked - a.daysBlocked)
+    .filter((issue) => issue.status === 'blocked')
+    .map((issue) => ({
+      issue,
+      daysBlocked: issue.blockedSince
+        ? daysBetween(issue.blockedSince, toISODate(referenceDate))
+        : null,
+    }))
+    .sort((a, b) => (b.daysBlocked ?? -1) - (a.daysBlocked ?? -1))
 }
 
 export function getStaleIssues(
   issues: JiraIssue[],
   thresholdDays: number,
-  referenceDate = TODAY,
-): BlockedIssueView[] {
+  referenceDate = DEMO_REFERENCE_DATE,
+): Array<{ issue: JiraIssue; daysStale: number }> {
   return issues
     .filter((i) => i.status === 'in_progress')
-    .map((issue) => ({ issue, daysBlocked: daysBetween(issue.updatedDate, toISODate(referenceDate)) }))
-    .filter((v) => v.daysBlocked >= thresholdDays)
-    .sort((a, b) => b.daysBlocked - a.daysBlocked)
+    .map((issue) => ({ issue, daysStale: daysBetween(issue.updatedDate, toISODate(referenceDate)) }))
+    .filter((value) => value.daysStale >= thresholdDays)
+    .sort((a, b) => b.daysStale - a.daysStale)
 }
 
 export interface HighWipView {
@@ -77,7 +85,7 @@ export interface CycleTimeStats {
 export function getCycleTimeStats(
   issues: JiraIssue[],
   windowDays: number,
-  referenceDate = TODAY,
+  referenceDate = DEMO_REFERENCE_DATE,
 ): CycleTimeStats | null {
   const done = issues.filter(
     (i): i is JiraIssue & { startedDate: string; doneDate: string } =>
@@ -90,8 +98,8 @@ export function getCycleTimeStats(
   for (const issue of done) {
     const daysAgo = daysBetween(issue.doneDate, toISODate(referenceDate))
     const cycleTime = daysBetween(issue.startedDate, issue.doneDate)
-    if (daysAgo <= windowDays) currentWindow.push(cycleTime)
-    else if (daysAgo <= windowDays * 2) previousWindow.push(cycleTime)
+    if (daysAgo >= 0 && daysAgo < windowDays) currentWindow.push(cycleTime)
+    else if (daysAgo >= windowDays && daysAgo < windowDays * 2) previousWindow.push(cycleTime)
   }
 
   if (currentWindow.length === 0 || previousWindow.length === 0) return null

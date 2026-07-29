@@ -1,13 +1,18 @@
 // Fixed reference date rather than `new Date()` — the mock data is anchored to
 // this date, so relative labels ("overdue by 3 days") stay correct regardless
 // of when the portfolio is actually viewed.
-export const TODAY = new Date('2026-07-28T00:00:00')
+export const DEMO_REFERENCE_DATE = new Date('2026-07-28T00:00:00')
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
-export function daysFromToday(isoDate: string): number {
+export function daysFromToday(isoDate: string, referenceDate = new Date()): number {
   const date = new Date(`${isoDate}T00:00:00`)
-  return Math.round((date.getTime() - TODAY.getTime()) / DAY_MS)
+  const reference = new Date(
+    referenceDate.getFullYear(),
+    referenceDate.getMonth(),
+    referenceDate.getDate(),
+  )
+  return Math.round((date.getTime() - reference.getTime()) / DAY_MS)
 }
 
 export function daysBetween(fromIso: string, toIso: string): number {
@@ -16,8 +21,8 @@ export function daysBetween(fromIso: string, toIso: string): number {
   return Math.round((to.getTime() - from.getTime()) / DAY_MS)
 }
 
-export function formatRelativeDue(isoDate: string): string {
-  const diff = daysFromToday(isoDate)
+export function formatRelativeDue(isoDate: string, referenceDate = new Date()): string {
+  const diff = daysFromToday(isoDate, referenceDate)
   if (diff === 0) return 'Today'
   if (diff === 1) return 'Tomorrow'
   if (diff === -1) return 'Overdue by 1 day'

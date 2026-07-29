@@ -1,21 +1,28 @@
 import { useEffect, useState } from 'react'
 import type { DeliveryGoal } from '../types'
+import { readStoredJson, writeStoredJson } from '../lib/storage'
 
 const STORAGE_KEY = 'em-dashboard:delivery-goal'
 
 function loadStoredGoal(seed: DeliveryGoal): DeliveryGoal {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
+    const stored = readStoredJson(STORAGE_KEY)
     if (!stored) return seed
-    const parsed = JSON.parse(stored)
+    const parsed = stored as Partial<DeliveryGoal>
     if (typeof parsed.text !== 'string' || !Array.isArray(parsed.linkedIssueIds)) return seed
-    const linkedIssueIds = parsed.linkedIssueIds.filter(
+    const storedIssueIds = parsed.linkedIssueIds.filter(
+      (issueId: unknown): issueId is string => typeof issueId === 'string',
+    )
+    const linkedIssueIds = storedIssueIds.filter(
       (issueId: unknown): issueId is string =>
         typeof issueId === 'string' && !issueId.toUpperCase().startsWith('ENG-'),
     )
     return {
       text: parsed.text,
-      linkedIssueIds: linkedIssueIds.length > 0 ? linkedIssueIds : seed.linkedIssueIds,
+      linkedIssueIds:
+        storedIssueIds.length > 0 && linkedIssueIds.length === 0
+          ? seed.linkedIssueIds
+          : linkedIssueIds,
     }
   } catch {
     return seed
@@ -26,7 +33,11 @@ export function useDeliveryGoal(seed: DeliveryGoal) {
   const [goal, setGoal] = useState<DeliveryGoal>(() => loadStoredGoal(seed))
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(goal))
+    try {
+      writeStoredJson(STORAGE_KEY, goal)
+    } catch {
+      // The in-memory goal remains usable when browser storage is unavailable.
+    }
   }, [goal])
 
   function setText(text: string) {

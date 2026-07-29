@@ -17,6 +17,12 @@ function blockedDuration(days: number) {
   return days === 0 ? 'blocked today' : `blocked for ${days} ${plural(days, 'day')}`
 }
 
+function blockedDurationForIssue(issue: JiraIssue, today: string): string {
+  return issue.blockedSince
+    ? blockedDuration(daysBetween(issue.blockedSince, today))
+    : 'blocked; duration unavailable'
+}
+
 function issueEvidence(issue: JiraIssue, detail: string) {
   return {
     type: 'jira' as const,
@@ -48,19 +54,22 @@ export function generateJiraInsights(issues: JiraIssue[], referenceDate = new Da
   for (const [dependency, group] of [...dependencyGroups].sort((a, b) => b[1].length - a[1].length)) {
     if (group.length < 2) continue
     group.forEach((issue) => groupedIssueIds.add(issue.id))
-    const oldestDays = Math.max(
-      ...group.map((issue) => daysBetween(issue.blockedSince ?? issue.updatedDate, today)),
+    const knownDurations = group.flatMap((issue) =>
+      issue.blockedSince ? [daysBetween(issue.blockedSince, today)] : [],
     )
+    const durationSummary = knownDurations.length > 0
+      ? ` The oldest confirmed blocker has been blocked for ${Math.max(...knownDurations)} ${plural(Math.max(...knownDurations), 'day')}.`
+      : ' Jira does not provide a reliable blocked-since date for these issues.'
     const keys = group.map((issue) => issue.id).join(', ')
     insights.push({
       id: `jira-shared-dependency-${stableId(dependency)}`,
       category: 'delivery_risk',
       title: `${group.length} Jira issues are blocked by the same dependency`,
-      summary: `${keys} are all waiting on the same dependency. The oldest has been blocked for ${oldestDays} ${plural(oldestDays, 'day')}.`,
+      summary: `${keys} are all waiting on the same dependency.${durationSummary}`,
       sources: group.map((issue) =>
         issueEvidence(
           issue,
-          `${blockedDuration(daysBetween(issue.blockedSince ?? issue.updatedDate, today))}: ${dependency}`,
+          `${blockedDurationForIssue(issue, today)}: ${dependency}`,
         ),
       ),
       confidence: group.length >= 3 ? 'high' : 'medium',
@@ -73,19 +82,19 @@ export function generateJiraInsights(issues: JiraIssue[], referenceDate = new Da
     .filter((issue) => !groupedIssueIds.has(issue.id))
     .map((issue) => ({
       issue,
-      days: daysBetween(issue.blockedSince ?? issue.updatedDate, today),
+      days: issue.blockedSince ? daysBetween(issue.blockedSince, today) : null,
     }))
-    .sort((a, b) => b.days - a.days)[0]
+    .sort((a, b) => (b.days ?? -1) - (a.days ?? -1))[0]
 
   if (longestBlocked) {
     const { issue, days } = longestBlocked
     insights.push({
       id: `jira-blocked-${issue.id.toLowerCase()}`,
       category: 'delivery_risk',
-      title: `${issue.id} is ${blockedDuration(days)}`,
+      title: `${issue.id} is ${days === null ? 'blocked' : blockedDuration(days)}`,
       summary: `${issue.title} is still blocked${issue.blockedReason ? `: ${issue.blockedReason}` : ''}.`,
-      sources: [issueEvidence(issue, `${issue.blockedReason ?? 'Blocked in Jira'} · ${blockedDuration(days)}`)],
-      confidence: days >= 5 ? 'high' : 'medium',
+      sources: [issueEvidence(issue, `${issue.blockedReason ?? 'Blocked in Jira'} · ${days === null ? 'duration unavailable' : blockedDuration(days)}`)],
+      confidence: days !== null && days >= 5 ? 'high' : 'medium',
       recommendedAction: `Confirm the unblock owner and next step for ${issue.id}`,
       status: 'new',
     })

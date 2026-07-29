@@ -15,7 +15,7 @@ import {
   slackMessages,
   deliveryGoalSeed,
 } from './data/mockData'
-import { formatAsOf, TODAY } from './lib/date'
+import { DEMO_REFERENCE_DATE, formatAsOf } from './lib/date'
 import { generateJiraInsights } from './lib/jiraInsights'
 import { detectTeamSignals } from './lib/teamSignals'
 import { pullRequestPeriodMetrics, retrospectiveActionPoints } from './data/teamSignalData'
@@ -57,7 +57,7 @@ function App() {
   const jira = useJiraIssues(demoJiraIssues)
   const jiraIssues = useMemo(() => (jira.ready ? jira.issues : []), [jira.issues, jira.ready])
   const generatedJiraInsights = useMemo(
-    () => generateJiraInsights(jiraIssues, jira.source === 'live' ? new Date() : TODAY),
+    () => generateJiraInsights(jiraIssues, jira.source === 'live' ? new Date() : DEMO_REFERENCE_DATE),
     [jiraIssues, jira.source],
   )
   const insightSeed = useMemo(
@@ -71,7 +71,7 @@ function App() {
       slackMessages,
       pullRequestMetrics: pullRequestPeriodMetrics,
       retrospectiveActions: retrospectiveActionPoints,
-      referenceDate: jira.source === 'live' ? new Date() : TODAY,
+      referenceDate: jira.source === 'live' ? new Date() : DEMO_REFERENCE_DATE,
     }),
     [jiraIssues, jira.source],
   )

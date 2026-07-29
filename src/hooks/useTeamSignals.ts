@@ -1,22 +1,25 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { TeamSignal, TeamSignalStatus } from '../types'
+import { readStoredJson, writeStoredJson } from '../lib/storage'
 
 const STORAGE_KEY = 'em-dashboard:team-signal-statuses'
 
 function loadStatuses(): Record<string, TeamSignalStatus> {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    return stored ? JSON.parse(stored) as Record<string, TeamSignalStatus> : {}
-  } catch {
-    return {}
-  }
+  const stored = readStoredJson(STORAGE_KEY)
+  if (typeof stored !== 'object' || stored === null || Array.isArray(stored)) return {}
+  return Object.fromEntries(
+    Object.entries(stored).filter(
+      (entry): entry is [string, TeamSignalStatus] =>
+        ['New', 'Acknowledged', 'Monitoring', 'Resolved'].includes(String(entry[1])),
+    ),
+  )
 }
 
 export function useTeamSignals(detectedSignals: TeamSignal[]) {
   const [statusById, setStatusById] = useState<Record<string, TeamSignalStatus>>(loadStatuses)
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(statusById))
+    writeStoredJson(STORAGE_KEY, statusById)
   }, [statusById])
 
   const signals = useMemo(

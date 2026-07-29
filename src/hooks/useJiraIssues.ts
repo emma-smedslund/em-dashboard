@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react'
-import type { JiraDataSource, JiraIssue, JiraIssuesResponse } from '../types'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { JiraDataSource, JiraIssue } from '../types'
+import { apiErrorMessage, isJiraIssuesResponse, requestJson } from '../lib/api'
 
 export function useJiraIssues(demoIssues: JiraIssue[]) {
   const [issues, setIssues] = useState<JiraIssue[]>([])
@@ -9,26 +10,33 @@ export function useJiraIssues(demoIssues: JiraIssue[]) {
   const [loading, setLoading] = useState(true)
   const [ready, setReady] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const activeRequest = useRef<AbortController | null>(null)
+  const requestSequence = useRef(0)
+  const abortActiveRequest = useCallback(() => activeRequest.current?.abort(), [])
 
   const refresh = useCallback(async () => {
+    abortActiveRequest()
+    const controller = new AbortController()
+    activeRequest.current = controller
+    const sequence = ++requestSequence.current
     setLoading(true)
     setError(null)
 
     try {
-      const response = await fetch('/api/jira/issues', {
-        headers: { Accept: 'application/json' },
-      })
-      const payload = (await response.json()) as JiraIssuesResponse | { error?: string }
+      const { response, payload } = await requestJson('/api/jira/issues', controller.signal)
 
-      if (!response.ok || !('issues' in payload)) {
-        throw new Error('error' in payload && payload.error ? payload.error : 'Jira request failed')
+      if (!response.ok) {
+        throw new Error(apiErrorMessage(payload, 'Jira request failed'))
       }
+      if (!isJiraIssuesResponse(payload)) throw new Error('Jira returned an unexpected response.')
+      if (sequence !== requestSequence.current) return
 
       setIssues(payload.issues)
       setProjectKey(payload.projectKey)
       setSyncedAt(payload.syncedAt)
       setSource('live')
     } catch (requestError) {
+      if (controller.signal.aborted || sequence !== requestSequence.current) return
       setIssues(demoIssues)
       setProjectKey(null)
       setSyncedAt(null)
@@ -40,14 +48,17 @@ export function useJiraIssues(demoIssues: JiraIssue[]) {
           : 'Could not connect to Jira',
       )
     } finally {
-      setLoading(false)
-      setReady(true)
+      if (sequence === requestSequence.current) {
+        setLoading(false)
+        setReady(true)
+      }
     }
-  }, [demoIssues])
+  }, [abortActiveRequest, demoIssues])
 
   useEffect(() => {
     void refresh()
-  }, [refresh])
+    return abortActiveRequest
+  }, [abortActiveRequest, refresh])
 
   return { issues, source, projectKey, syncedAt, loading, ready, error, refresh }
 }

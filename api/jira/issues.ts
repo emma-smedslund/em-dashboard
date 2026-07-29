@@ -125,7 +125,8 @@ async function searchIssues(config: JiraConfig): Promise<JiraSearchIssue[]> {
       nextPageToken?: string
       isLast?: boolean
     }
-    issues.push(...(page.issues ?? []))
+    if (!Array.isArray(page.issues)) throw new Error('Jira returned an unexpected issue response')
+    issues.push(...page.issues)
     nextPageToken = page.isLast ? undefined : page.nextPageToken
   } while (nextPageToken && issues.length < 500)
 
@@ -161,7 +162,11 @@ async function getBulkChangelogs(
       nextPageToken?: string
     }
 
-    for (const issueLog of page.issueChangeLogs ?? []) {
+    if (!Array.isArray(page.issueChangeLogs)) {
+      throw new Error('Jira returned an unexpected changelog response')
+    }
+
+    for (const issueLog of page.issueChangeLogs) {
       const existing = changesByIssueId.get(String(issueLog.issueId)) ?? []
       existing.push(...(issueLog.changeHistories ?? []))
       changesByIssueId.set(String(issueLog.issueId), existing)
@@ -251,10 +256,7 @@ function normalizeIssue(config: JiraConfig, issue: JiraSearchIssue, changes: Jir
     url: `${config.baseUrl}/browse/${issue.key}`,
     updatedDate: issue.fields.updated.slice(0, 10),
     blockedReason: status === 'blocked' ? dependency.reason ?? 'Blocked in Jira' : undefined,
-    blockedSince:
-      status === 'blocked'
-        ? lastStatusDate(sortedChanges, 'Blocked') ?? issue.fields.updated.slice(0, 10)
-        : undefined,
+    blockedSince: status === 'blocked' ? lastStatusDate(sortedChanges, 'Blocked') : undefined,
     crossTeamDependency: dependency.crossTeamDependency,
     startedDate: firstStatusDate(sortedChanges, ['In Progress', 'In Review']),
     doneDate:
@@ -265,6 +267,7 @@ function normalizeIssue(config: JiraConfig, issue: JiraSearchIssue, changes: Jir
 }
 
 export default async function handler(request: ApiRequest, response: ApiResponse): Promise<void> {
+  response.setHeader('Cache-Control', 'private, no-store')
   if (request.method !== 'GET') {
     response.status(405).json({ error: 'Method not allowed' })
     return
@@ -278,7 +281,6 @@ export default async function handler(request: ApiRequest, response: ApiResponse
       normalizeIssue(config, issue, changelogs.get(issue.id) ?? []),
     )
 
-    response.setHeader('Cache-Control', 'private, no-store')
     response.status(200).json({
       issues,
       projectKey: config.projectKey,
