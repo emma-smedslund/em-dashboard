@@ -77,6 +77,7 @@ export async function requestJson(url: string, signal: AbortSignal): Promise<{
   const timeoutController = new AbortController()
   const timeout = window.setTimeout(() => timeoutController.abort(), REQUEST_TIMEOUT_MS)
   const abortFromCaller = () => timeoutController.abort()
+  if (signal.aborted) abortFromCaller()
   signal.addEventListener('abort', abortFromCaller, { once: true })
 
   try {

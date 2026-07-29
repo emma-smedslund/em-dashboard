@@ -7,7 +7,6 @@ interface JiraSearchIssue {
     summary: string
     status: { name: string; statusCategory?: { key?: string } }
     assignee: { accountId?: string; displayName?: string } | null
-    created: string
     updated: string
     resolutiondate: string | null
     parent?: { fields?: { summary?: string } }
@@ -112,7 +111,6 @@ async function searchIssues(config: JiraConfig): Promise<JiraSearchIssue[]> {
           'summary',
           'status',
           'assignee',
-          'created',
           'updated',
           'resolutiondate',
           'parent',
