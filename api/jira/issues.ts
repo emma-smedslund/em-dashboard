@@ -1,8 +1,8 @@
 type InternalStatus = 'todo' | 'in_progress' | 'blocked' | 'done'
 
 interface JiraSearchIssue {
+  id: string
   key: string
-  changelog?: { histories?: JiraChange[] }
   fields: {
     summary: string
     status: { name: string; statusCategory?: { key?: string } }
@@ -20,7 +20,7 @@ interface JiraSearchIssue {
 }
 
 interface JiraChange {
-  created: string
+  created: string | number
   items: Array<{ field: string; fromString?: string; toString?: string }>
 }
 
@@ -58,15 +58,24 @@ function authHeader(config: JiraConfig): string {
 }
 
 async function jiraFetch(config: JiraConfig, path: string, init?: RequestInit): Promise<Response> {
-  const response = await fetch(`${config.baseUrl}${path}`, {
-    ...init,
-    headers: {
-      Accept: 'application/json',
-      Authorization: authHeader(config),
-      'Content-Type': 'application/json',
-      ...init?.headers,
-    },
-  })
+  let response: Response
+  try {
+    response = await fetch(`${config.baseUrl}${path}`, {
+      ...init,
+      signal: init?.signal ?? AbortSignal.timeout(12_000),
+      headers: {
+        Accept: 'application/json',
+        Authorization: authHeader(config),
+        'Content-Type': 'application/json',
+        ...init?.headers,
+      },
+    })
+  } catch (error) {
+    if (error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError')) {
+      throw new Error('Jira API timed out')
+    }
+    throw error
+  }
 
   if (!response.ok) {
     if (response.status === 401 || response.status === 403) {
@@ -89,7 +98,6 @@ async function searchIssues(config: JiraConfig): Promise<JiraSearchIssue[]> {
         jql: config.jql,
         maxResults: 100,
         nextPageToken,
-        expand: 'changelog',
         fields: [
           'summary',
           'status',
@@ -114,6 +122,46 @@ async function searchIssues(config: JiraConfig): Promise<JiraSearchIssue[]> {
   return issues
 }
 
+function changeDate(value: string | number): string {
+  if (typeof value === 'string') return value
+  const milliseconds = value < 10_000_000_000 ? value * 1000 : value
+  return new Date(milliseconds).toISOString()
+}
+
+async function getBulkChangelogs(
+  config: JiraConfig,
+  issues: JiraSearchIssue[],
+): Promise<Map<string, JiraChange[]>> {
+  const changesByIssueId = new Map<string, JiraChange[]>()
+  if (issues.length === 0) return changesByIssueId
+
+  let nextPageToken: string | undefined
+  do {
+    const response = await jiraFetch(config, '/rest/api/3/changelog/bulkfetch', {
+      method: 'POST',
+      body: JSON.stringify({
+        issueIdsOrKeys: issues.map((issue) => issue.key),
+        fieldIds: ['status'],
+        maxResults: 1000,
+        nextPageToken,
+      }),
+    })
+    const page = (await response.json()) as {
+      issueChangeLogs?: Array<{ issueId: string; changeHistories?: JiraChange[] }>
+      nextPageToken?: string
+    }
+
+    for (const issueLog of page.issueChangeLogs ?? []) {
+      const existing = changesByIssueId.get(String(issueLog.issueId)) ?? []
+      existing.push(...(issueLog.changeHistories ?? []))
+      changesByIssueId.set(String(issueLog.issueId), existing)
+    }
+    nextPageToken = page.nextPageToken
+  } while (nextPageToken)
+
+  return changesByIssueId
+}
+
 function mapStatus(name: string, category?: string): InternalStatus {
   const normalized = name.trim().toLowerCase()
   if (normalized === 'blocked') return 'blocked'
@@ -128,7 +176,7 @@ function firstStatusDate(changes: JiraChange[], statusNames: string[]): string |
   const targets = new Set(statusNames.map((name) => name.toLowerCase()))
   return changes
     .flatMap((change) =>
-      change.items.map((item) => ({ ...item, created: change.created })),
+      change.items.map((item) => ({ ...item, created: changeDate(change.created) })),
     )
     .find(
       (item) =>
@@ -141,7 +189,7 @@ function lastStatusDate(changes: JiraChange[], statusName: string): string | und
   const target = statusName.toLowerCase()
   return changes
     .flatMap((change) =>
-      change.items.map((item) => ({ ...item, created: change.created })),
+      change.items.map((item) => ({ ...item, created: changeDate(change.created) })),
     )
     .filter(
       (item) => item.field.toLowerCase() === 'status' && item.toString?.toLowerCase() === target,
@@ -175,9 +223,9 @@ function dependencies(issue: JiraSearchIssue, projectKey: string) {
   }
 }
 
-function normalizeIssue(config: JiraConfig, issue: JiraSearchIssue) {
-  const changes = [...(issue.changelog?.histories ?? [])].sort((a, b) =>
-    a.created.localeCompare(b.created),
+function normalizeIssue(config: JiraConfig, issue: JiraSearchIssue, changes: JiraChange[]) {
+  const sortedChanges = [...changes].sort((a, b) =>
+    changeDate(a.created).localeCompare(changeDate(b.created)),
   )
   const status = mapStatus(issue.fields.status.name, issue.fields.status.statusCategory?.key)
   const dependency = dependencies(issue, config.projectKey)
@@ -194,13 +242,13 @@ function normalizeIssue(config: JiraConfig, issue: JiraSearchIssue) {
     blockedReason: status === 'blocked' ? dependency.reason ?? 'Blocked in Jira' : undefined,
     blockedSince:
       status === 'blocked'
-        ? lastStatusDate(changes, 'Blocked') ?? issue.fields.updated.slice(0, 10)
+        ? lastStatusDate(sortedChanges, 'Blocked') ?? issue.fields.updated.slice(0, 10)
         : undefined,
     crossTeamDependency: dependency.crossTeamDependency,
-    startedDate: firstStatusDate(changes, ['In Progress', 'In Review']),
+    startedDate: firstStatusDate(sortedChanges, ['In Progress', 'In Review']),
     doneDate:
       status === 'done'
-        ? issue.fields.resolutiondate?.slice(0, 10) ?? lastStatusDate(changes, 'Done')
+        ? issue.fields.resolutiondate?.slice(0, 10) ?? lastStatusDate(sortedChanges, 'Done')
         : undefined,
   }
 }
@@ -213,7 +261,10 @@ export default async function handler(request: Request): Promise<Response> {
   try {
     const config = getConfig()
     const rawIssues = await searchIssues(config)
-    const issues = rawIssues.map((issue) => normalizeIssue(config, issue))
+    const changelogs = await getBulkChangelogs(config, rawIssues)
+    const issues = rawIssues.map((issue) =>
+      normalizeIssue(config, issue, changelogs.get(issue.id) ?? []),
+    )
 
     return Response.json(
       { issues, projectKey: config.projectKey, syncedAt: new Date().toISOString() },
