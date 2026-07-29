@@ -27,13 +27,23 @@ export interface JiraIssue {
   title: string
   status: 'todo' | 'in_progress' | 'blocked' | 'done'
   assigneeId: string
+  assigneeName?: string // populated by live Jira; demo data resolves names via teamMembers
   epic: string
+  url?: string // direct link back to the Jira issue when using live data
   updatedDate: string // ISO date; last activity, used to detect stale tickets
   blockedReason?: string
   blockedSince?: string // ISO date; present only while status === 'blocked'
   crossTeamDependency?: string // name of the other team this issue is blocked on, if any
   startedDate?: string // ISO date; when work began, used for cycle time
   doneDate?: string // ISO date; when the issue was completed, used for cycle time
+}
+
+export type JiraDataSource = 'live' | 'demo'
+
+export interface JiraIssuesResponse {
+  issues: JiraIssue[]
+  projectKey: string
+  syncedAt: string
 }
 
 // A goal the EM is tracking for the current delivery window, with progress

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import type { JiraIssue, TeamMember, DeliveryGoal } from '../types'
+import type { JiraIssue, TeamMember, DeliveryGoal, JiraDataSource } from '../types'
 import {
   getBlockedIssues,
   getStaleIssues,
@@ -9,6 +9,7 @@ import {
   getGoalProgress,
 } from '../lib/delivery'
 import { StatusPill } from './StatusPill'
+import { TODAY } from '../lib/date'
 
 const STALE_THRESHOLD_DAYS = 5
 const CYCLE_TIME_WINDOW_DAYS = 14
@@ -21,6 +22,12 @@ export function DeliveryRadar({
   onLinkIssue,
   onUnlinkIssue,
   onViewInsights,
+  dataSource,
+  projectKey,
+  syncedAt,
+  loading,
+  error,
+  onRefresh,
 }: {
   issues: JiraIssue[]
   members: TeamMember[]
@@ -29,19 +36,27 @@ export function DeliveryRadar({
   onLinkIssue: (issueId: string) => void
   onUnlinkIssue: (issueId: string) => void
   onViewInsights?: () => void
+  dataSource: JiraDataSource
+  projectKey: string | null
+  syncedAt: string | null
+  loading: boolean
+  error: string | null
+  onRefresh: () => void
 }) {
   const [linkInput, setLinkInput] = useState('')
   const [linkError, setLinkError] = useState<string | null>(null)
 
+  const referenceDate = dataSource === 'live' ? new Date() : TODAY
   const progress = getGoalProgress(goal, issues)
-  const blocked = getBlockedIssues(issues)
-  const stale = getStaleIssues(issues, STALE_THRESHOLD_DAYS)
+  const blocked = getBlockedIssues(issues, referenceDate)
+  const stale = getStaleIssues(issues, STALE_THRESHOLD_DAYS, referenceDate)
   const highWip = getHighWipDevelopers(issues, members)
-  const cycleTime = getCycleTimeStats(issues, CYCLE_TIME_WINDOW_DAYS)
+  const cycleTime = getCycleTimeStats(issues, CYCLE_TIME_WINDOW_DAYS, referenceDate)
   const crossTeamCount = issues.filter((i) => i.status === 'blocked' && i.crossTeamDependency).length
 
   function memberName(assigneeId: string): string {
-    return members.find((m) => m.id === assigneeId)?.name ?? 'Unassigned'
+    const issue = issues.find((candidate) => candidate.assigneeId === assigneeId)
+    return issue?.assigneeName ?? members.find((m) => m.id === assigneeId)?.name ?? 'Unassigned'
   }
 
   function submitLink(e: FormEvent) {
@@ -59,6 +74,36 @@ export function DeliveryRadar({
 
   return (
     <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-1)] px-3 py-2">
+        <div className="flex items-center gap-2">
+          <StatusPill
+            level={dataSource === 'live' ? 'good' : 'neutral'}
+            label={dataSource === 'live' ? `Live Jira · ${projectKey ?? ''}` : 'Demo Jira data'}
+          />
+          <span className="text-xs text-[var(--text-muted)]">
+            {loading
+              ? 'Syncing…'
+              : syncedAt
+                ? `Last synced ${new Date(syncedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+                : 'Live Jira is unavailable; showing the demo dataset.'}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={onRefresh}
+          disabled={loading}
+          className="text-xs font-medium text-[var(--series-blue)] hover:underline disabled:opacity-50"
+        >
+          {loading ? 'Refreshing…' : 'Refresh'}
+        </button>
+      </div>
+
+      {error && dataSource === 'demo' && (
+        <p className="-mt-4 text-xs text-[var(--text-muted)]" role="status">
+          {error}
+        </p>
+      )}
+
       <section>
         <h2 className="mb-2 text-sm font-semibold text-[var(--text-primary)]">
           Current Delivery Goal
@@ -176,12 +221,12 @@ export function DeliveryRadar({
           </p>
         ) : (
           <ul className="space-y-2">
-            {highWip.map(({ member, count }) => (
+            {highWip.map(({ assigneeId, name, count }) => (
               <li
-                key={member.id}
+                key={assigneeId}
                 className="flex items-center justify-between gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-3"
               >
-                <span className="text-sm text-[var(--text-primary)]">{member.name}</span>
+                <span className="text-sm text-[var(--text-primary)]">{name}</span>
                 <StatusPill level="critical" label={`${count} issues in progress`} />
               </li>
             ))}
@@ -195,7 +240,7 @@ export function DeliveryRadar({
         </h2>
         {stale.length === 0 ? (
           <p className="text-sm text-[var(--text-muted)]">
-            Nothing has gone quiet for more than {STALE_THRESHOLD_DAYS} days.
+            Nothing has gone quiet for {STALE_THRESHOLD_DAYS} days or more.
           </p>
         ) : (
           <ul className="space-y-2">
@@ -205,9 +250,20 @@ export function DeliveryRadar({
                 className="flex items-center justify-between gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-3"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm text-[var(--text-primary)]">
-                    {issue.id} · {issue.title}
-                  </p>
+                  {issue.url ? (
+                    <a
+                      href={issue.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="truncate text-sm text-[var(--series-blue)] hover:underline"
+                    >
+                      {issue.id} · {issue.title}
+                    </a>
+                  ) : (
+                    <p className="truncate text-sm text-[var(--text-primary)]">
+                      {issue.id} · {issue.title}
+                    </p>
+                  )}
                   <p className="text-xs text-[var(--text-muted)]">{memberName(issue.assigneeId)}</p>
                 </div>
                 <StatusPill level="warning" label={`No activity in ${daysBlocked} days`} />

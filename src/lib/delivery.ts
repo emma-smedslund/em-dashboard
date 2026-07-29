@@ -14,23 +14,28 @@ export interface BlockedIssueView {
   daysBlocked: number
 }
 
-export function getBlockedIssues(issues: JiraIssue[]): BlockedIssueView[] {
+export function getBlockedIssues(issues: JiraIssue[], referenceDate = TODAY): BlockedIssueView[] {
   return issues
     .filter((i): i is JiraIssue & { blockedSince: string } => i.status === 'blocked' && !!i.blockedSince)
-    .map((issue) => ({ issue, daysBlocked: daysBetween(issue.blockedSince, toISODate(TODAY)) }))
+    .map((issue) => ({ issue, daysBlocked: daysBetween(issue.blockedSince, toISODate(referenceDate)) }))
     .sort((a, b) => b.daysBlocked - a.daysBlocked)
 }
 
-export function getStaleIssues(issues: JiraIssue[], thresholdDays: number): BlockedIssueView[] {
+export function getStaleIssues(
+  issues: JiraIssue[],
+  thresholdDays: number,
+  referenceDate = TODAY,
+): BlockedIssueView[] {
   return issues
     .filter((i) => i.status === 'in_progress')
-    .map((issue) => ({ issue, daysBlocked: daysBetween(issue.updatedDate, toISODate(TODAY)) }))
-    .filter((v) => v.daysBlocked > thresholdDays)
+    .map((issue) => ({ issue, daysBlocked: daysBetween(issue.updatedDate, toISODate(referenceDate)) }))
+    .filter((v) => v.daysBlocked >= thresholdDays)
     .sort((a, b) => b.daysBlocked - a.daysBlocked)
 }
 
 export interface HighWipView {
-  member: TeamMember
+  assigneeId: string
+  name: string
   count: number
 }
 
@@ -45,8 +50,17 @@ export function getHighWipDevelopers(
     counts.set(issue.assigneeId, (counts.get(issue.assigneeId) ?? 0) + 1)
   }
 
-  return members
-    .map((member) => ({ member, count: counts.get(member.id) ?? 0 }))
+  const names = new Map(members.map((member) => [member.id, member.name]))
+  for (const issue of issues) {
+    if (issue.assigneeName) names.set(issue.assigneeId, issue.assigneeName)
+  }
+
+  return [...counts.entries()]
+    .map(([assigneeId, count]) => ({
+      assigneeId,
+      name: names.get(assigneeId) ?? 'Unassigned',
+      count,
+    }))
     .filter((v) => v.count > threshold)
     .sort((a, b) => b.count - a.count)
 }
@@ -60,7 +74,11 @@ export interface CycleTimeStats {
 // Rolling-window comparison (current window vs the one before it) rather
 // than sprint boundaries — works the same for scrum, scrumban, and kanban
 // teams. windowDays is a parameter so it can become user-configurable later.
-export function getCycleTimeStats(issues: JiraIssue[], windowDays: number): CycleTimeStats | null {
+export function getCycleTimeStats(
+  issues: JiraIssue[],
+  windowDays: number,
+  referenceDate = TODAY,
+): CycleTimeStats | null {
   const done = issues.filter(
     (i): i is JiraIssue & { startedDate: string; doneDate: string } =>
       i.status === 'done' && !!i.startedDate && !!i.doneDate,
@@ -70,7 +88,7 @@ export function getCycleTimeStats(issues: JiraIssue[], windowDays: number): Cycl
   const previousWindow: number[] = []
 
   for (const issue of done) {
-    const daysAgo = daysBetween(issue.doneDate, toISODate(TODAY))
+    const daysAgo = daysBetween(issue.doneDate, toISODate(referenceDate))
     const cycleTime = daysBetween(issue.startedDate, issue.doneDate)
     if (daysAgo <= windowDays) currentWindow.push(cycleTime)
     else if (daysAgo <= windowDays * 2) previousWindow.push(cycleTime)

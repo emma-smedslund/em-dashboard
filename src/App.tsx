@@ -7,13 +7,14 @@ import { Actions } from './components/Actions'
 import { TabNav } from './components/TabNav'
 import { useActions } from './hooks/useActions'
 import { useDeliveryGoal } from './hooks/useDeliveryGoal'
+import { useJiraIssues } from './hooks/useJiraIssues'
 import {
   teamMembers,
   healthEntries,
   actionItems,
   aiInsights,
   actionEntries,
-  jiraIssues,
+  jiraIssues as demoJiraIssues,
   slackMessages,
   deliveryGoalSeed,
 } from './data/mockData'
@@ -65,6 +66,7 @@ function App() {
     clearConfirmation,
   } = useActions(aiInsights, actionEntries)
   const { goal, setText, linkIssue, unlinkIssue } = useDeliveryGoal(deliveryGoalSeed)
+  const jira = useJiraIssues(demoJiraIssues)
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -94,19 +96,25 @@ function App() {
 
         {activeTab === 'delivery' && (
           <DeliveryRadar
-            issues={jiraIssues}
+            issues={jira.issues}
             members={teamMembers}
             goal={goal}
             onSetGoalText={setText}
             onLinkIssue={linkIssue}
             onUnlinkIssue={unlinkIssue}
             onViewInsights={() => setActiveTab('insights')}
+            dataSource={jira.source}
+            projectKey={jira.projectKey}
+            syncedAt={jira.syncedAt}
+            loading={jira.loading}
+            error={jira.error}
+            onRefresh={jira.refresh}
           />
         )}
         {activeTab === 'insights' && (
           <AIInsights
             insights={insights}
-            jiraIssues={jiraIssues}
+            jiraIssues={demoJiraIssues}
             slackMessages={slackMessages}
             healthEntries={healthEntries}
             members={teamMembers}
