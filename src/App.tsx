@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
-import { TeamHealthPulse } from './components/TeamHealthPulse'
+import { TeamSignals } from './components/TeamSignals'
 import { DeliveryRadar } from './components/DeliveryRadar'
-import { ActionTracker } from './components/ActionTracker'
 import { AIInsights } from './components/AIInsights'
 import { Actions } from './components/Actions'
 import { TabNav } from './components/TabNav'
@@ -10,8 +9,6 @@ import { useDeliveryGoal } from './hooks/useDeliveryGoal'
 import { useJiraIssues } from './hooks/useJiraIssues'
 import {
   teamMembers,
-  healthEntries,
-  actionItems,
   aiInsights,
   actionEntries,
   jiraIssues as demoJiraIssues,
@@ -20,6 +17,9 @@ import {
 } from './data/mockData'
 import { formatAsOf, TODAY } from './lib/date'
 import { generateJiraInsights } from './lib/jiraInsights'
+import { detectTeamSignals } from './lib/teamSignals'
+import { pullRequestPeriodMetrics, retrospectiveActionPoints } from './data/teamSignalData'
+import { useTeamSignals } from './hooks/useTeamSignals'
 
 const TABS = [
   {
@@ -28,24 +28,19 @@ const TABS = [
     description: 'Operational delivery health: goal progress, flow, and where work is stuck.',
   },
   {
-    id: 'insights',
-    label: 'AI Insights',
-    description: 'AI-surfaced risks worth your attention, ranked by confidence.',
-  },
-  {
     id: 'actions',
     label: 'Actions & Decisions Log',
     description: 'AI-suggested and manually added follow-ups, from proposal to completion.',
   },
   {
-    id: 'health',
-    label: 'Team Pulse',
-    description: 'Self-reported sentiment trend and current workload per person.',
+    id: 'signals',
+    label: 'Team Signals',
+    description: 'Emerging patterns worth reviewing before they become larger problems.',
   },
   {
-    id: 'tracker',
-    label: "1:1's",
-    description: 'Upcoming 1:1s and open follow-ups, soonest first.',
+    id: 'insights',
+    label: 'AI Insights',
+    description: 'Broader interpretation across multiple engineering signals and sources.',
   },
 ] as const
 
@@ -68,10 +63,23 @@ function App() {
     () => [...generatedJiraInsights, ...DEMO_INSIGHTS],
     [generatedJiraInsights],
   )
+  const detectedTeamSignals = useMemo(
+    () => detectTeamSignals({
+      jiraIssues: jira.issues,
+      jiraDataSource: jira.source,
+      slackMessages,
+      pullRequestMetrics: pullRequestPeriodMetrics,
+      retrospectiveActions: retrospectiveActionPoints,
+      referenceDate: jira.source === 'live' ? new Date() : TODAY,
+    }),
+    [jira.issues, jira.source],
+  )
+  const { signals: teamSignals, setSignalStatus } = useTeamSignals(detectedTeamSignals)
   const {
     insights,
     actions,
     suggestActionFromInsight,
+    suggestActionFromSignal,
     dismissInsight,
     acceptAction,
     dismissAction,
@@ -129,7 +137,6 @@ function App() {
             insights={insights}
             jiraIssues={jira.issues}
             slackMessages={slackMessages}
-            healthEntries={healthEntries}
             members={teamMembers}
             jiraDataSource={jira.source}
             projectKey={jira.projectKey}
@@ -160,11 +167,13 @@ function App() {
             onViewInsight={() => setActiveTab('insights')}
           />
         )}
-        {activeTab === 'health' && (
-          <TeamHealthPulse members={teamMembers} entries={healthEntries} />
-        )}
-        {activeTab === 'tracker' && (
-          <ActionTracker items={actionItems} members={teamMembers} />
+        {activeTab === 'signals' && (
+          <TeamSignals
+            signals={teamSignals}
+            jiraIssues={jira.issues}
+            onCreateAction={suggestActionFromSignal}
+            onSetStatus={setSignalStatus}
+          />
         )}
       </section>
 

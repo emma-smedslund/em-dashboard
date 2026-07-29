@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { AIInsight, ActionEntry, ActionPriority } from '../types'
+import type { AIInsight, ActionEntry, ActionPriority, TeamSignal } from '../types'
 import { TODAY, toISODate } from '../lib/date'
 
 const CONFIRMATION_DURATION_MS = 4000
@@ -8,6 +8,12 @@ const CONFIDENCE_TO_PRIORITY: Record<AIInsight['confidence'], ActionPriority> = 
   high: 'high',
   medium: 'medium',
   low: 'low',
+}
+
+const SIGNAL_TO_PRIORITY: Record<TeamSignal['severity'], ActionPriority> = {
+  Info: 'low',
+  Watch: 'medium',
+  Attention: 'high',
 }
 
 export function useActions(seedInsights: AIInsight[], seedActions: ActionEntry[]) {
@@ -72,6 +78,32 @@ export function useActions(seedInsights: AIInsight[], seedActions: ActionEntry[]
           : i,
       ),
     )
+  }
+
+  function suggestActionFromSignal(signal: TeamSignal) {
+    if (actions.some((action) => action.sourceSignalId === signal.id)) {
+      setConfirmation('This signal already has an action')
+      return
+    }
+    const action: ActionEntry = {
+      id: `action-${signal.id}`,
+      title: signal.suggestedFollowUp ?? `Follow up on: ${signal.title}`,
+      status: 'suggested',
+      owner: null,
+      dueDate: null,
+      priority: SIGNAL_TO_PRIORITY[signal.severity],
+      source: 'signal',
+      context: signal.summary,
+      createdDate: toISODate(TODAY),
+      sourceSignalId: signal.id,
+      sourceSignalTitle: signal.title,
+      sourceEvidence: signal.evidence.map((item) => item.label),
+      linkedJiraIssueIds: signal.source === 'Jira'
+        ? signal.evidence.flatMap((item) => item.refId ? [item.refId] : [])
+        : undefined,
+    }
+    setActions((current) => [action, ...current])
+    setConfirmation(`Sent to Actions: "${action.title}"`)
   }
 
   // The moment a suggestion becomes a real, owned, scheduled action — the
@@ -143,6 +175,7 @@ export function useActions(seedInsights: AIInsight[], seedActions: ActionEntry[]
     insights,
     actions,
     suggestActionFromInsight,
+    suggestActionFromSignal,
     dismissInsight,
     acceptAction,
     dismissAction,

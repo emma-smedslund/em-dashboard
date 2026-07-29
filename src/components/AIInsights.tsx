@@ -4,7 +4,6 @@ import type {
   InsightSource,
   JiraIssue,
   SlackMessage,
-  HealthEntry,
   TeamMember,
   InsightCategory,
   JiraDataSource,
@@ -36,14 +35,12 @@ function SourceCard({
   source,
   jiraIssues,
   slackMessages,
-  healthEntries,
   members,
   jiraDataSource,
 }: {
   source: InsightSource
   jiraIssues: JiraIssue[]
   slackMessages: SlackMessage[]
-  healthEntries: HealthEntry[]
   members: TeamMember[]
   jiraDataSource: JiraDataSource
 }) {
@@ -105,26 +102,6 @@ function SourceCard({
     }
   }
 
-  if (source.type === 'health' && source.refId) {
-    const [memberId, week] = source.refId.split(':')
-    const member = members.find((m) => m.id === memberId)
-    const entry = healthEntries.find((h) => h.memberId === memberId && h.week === week)
-    if (member && entry) {
-      return (
-        <>
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
-            Demo Team Pulse
-          </p>
-          <p className="text-xs font-medium text-[var(--text-primary)]">{member.name}</p>
-          <p className="text-xs text-[var(--text-secondary)]">
-            Sentiment {entry.sentiment}/5 · Workload {entry.workload}/5
-          </p>
-          <p className="text-xs text-[var(--text-muted)]">Week of {formatShortDate(entry.week)}</p>
-        </>
-      )
-    }
-  }
-
   return (
     <>
       <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
@@ -139,7 +116,6 @@ export function AIInsights({
   insights,
   jiraIssues,
   slackMessages,
-  healthEntries,
   members,
   jiraDataSource,
   projectKey,
@@ -154,7 +130,6 @@ export function AIInsights({
   insights: AIInsight[]
   jiraIssues: JiraIssue[]
   slackMessages: SlackMessage[]
-  healthEntries: HealthEntry[]
   members: TeamMember[]
   jiraDataSource: JiraDataSource
   projectKey: string | null
@@ -185,7 +160,7 @@ export function AIInsights({
             level={jiraDataSource === 'live' ? 'good' : 'neutral'}
             label={jiraDataSource === 'live' ? `Live Jira · ${projectKey ?? ''}` : 'Demo Jira data'}
           />
-          <StatusPill level="neutral" label="Demo Slack + Team Pulse" />
+          <StatusPill level="neutral" label="Demo Slack" />
           <span className="text-xs text-[var(--text-muted)]">
             {loading
               ? 'Analyzing Jira signals…'
@@ -257,7 +232,6 @@ export function AIInsights({
                       source={source}
                       jiraIssues={jiraIssues}
                       slackMessages={slackMessages}
-                      healthEntries={healthEntries}
                       members={members}
                       jiraDataSource={jiraDataSource}
                     />

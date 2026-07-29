@@ -5,21 +5,6 @@ export interface TeamMember {
   role: string
 }
 
-export interface HealthEntry {
-  memberId: string
-  week: string // ISO date, e.g. "2026-07-07"
-  sentiment: number // 1-5, self-reported
-  workload: number // 1-5, 5 = overloaded
-}
-
-export interface ActionItem {
-  id: string
-  memberId: string
-  kind: 'one_on_one' | 'follow_up'
-  title: string
-  dueDate: string // ISO date; status ('overdue' vs 'upcoming') is derived from this, see lib/date.ts
-}
-
 // Simulated signal sources. These stand in for real Jira/Slack integrations
 // until a live connection is wired up.
 export interface JiraIssue {
@@ -64,24 +49,19 @@ export interface SlackMessage {
   replyCount: number
 }
 
-export interface InitiativeLoadPoint {
-  sprint: string
-  activeInitiatives: number
-}
-
 export type InsightCategory =
   | 'delivery_risk'
   | 'recurring_issue'
   | 'unresolved_question'
   | 'possible_overload'
 
-export type SignalSourceType = 'jira' | 'slack' | 'health' | 'delivery'
+export type SignalSourceType = 'jira' | 'slack' | 'delivery'
 
 export interface InsightSource {
   type: SignalSourceType
   label: string // human-readable evidence line, always shown
-  // Links to a concrete record when present: JiraIssue.id, SlackMessage.id,
-  // or "<memberId>:<week>" for a HealthEntry. Omitted for aggregate/
+  // Links to a concrete record when present: JiraIssue.id or SlackMessage.id.
+  // Omitted for aggregate/
   // statistical evidence (e.g. a velocity trend) that has no single record.
   refId?: string
 }
@@ -99,7 +79,7 @@ export interface AIInsight {
 
 export type ActionStatus = 'suggested' | 'active' | 'completed' | 'dismissed'
 export type ActionPriority = 'low' | 'medium' | 'high'
-export type ActionSource = 'ai' | 'manual'
+export type ActionSource = 'ai' | 'signal' | 'manual'
 
 export interface ActionEntry {
   id: string
@@ -116,4 +96,61 @@ export interface ActionEntry {
   sourceInsightTitle?: string // copied from the insight at creation time so this doesn't depend on the insights list
   sourceEvidence?: string[] // rationale bullets carried over from the insight
   linkedJiraIssueIds?: string[] // live Jira references; Jira status remains read-only in this app
+  sourceSignalId?: string
+  sourceSignalTitle?: string
+}
+
+export const TEAM_SIGNAL_CATEGORIES = [
+  'Delivery',
+  'Maintenance',
+  'Quality',
+  'Collaboration',
+  'Availability',
+  'Improvement',
+  'Retrospective',
+] as const
+export type TeamSignalCategory = (typeof TEAM_SIGNAL_CATEGORIES)[number]
+
+export const TEAM_SIGNAL_SEVERITIES = ['Info', 'Watch', 'Attention'] as const
+export type TeamSignalSeverity = (typeof TEAM_SIGNAL_SEVERITIES)[number]
+
+export const TEAM_SIGNAL_STATUSES = ['New', 'Acknowledged', 'Monitoring', 'Resolved'] as const
+export type TeamSignalStatus = (typeof TEAM_SIGNAL_STATUSES)[number]
+
+export const TEAM_SIGNAL_SOURCES = ['Jira', 'Slack', 'GitHub', 'Retrospective'] as const
+export type TeamSignalSource = (typeof TEAM_SIGNAL_SOURCES)[number]
+
+export interface TeamSignalEvidence {
+  label: string
+  refId?: string
+}
+
+export interface TeamSignal {
+  id: string
+  title: string
+  summary: string
+  category: TeamSignalCategory
+  severity: TeamSignalSeverity
+  source: TeamSignalSource
+  sourceMode: 'live' | 'demo'
+  detectedAt: string
+  timeRange: string
+  evidence: TeamSignalEvidence[]
+  suggestedFollowUp?: string
+  status: TeamSignalStatus
+}
+
+export interface PullRequestPeriodMetric {
+  period: 'current' | 'previous'
+  medianReviewHours: number
+  topTwoReviewerShare: number
+}
+
+export interface RetrospectiveActionPoint {
+  id: string
+  title: string
+  theme: string
+  status: 'open' | 'resolved'
+  createdDate: string
+  updatedDate: string
 }

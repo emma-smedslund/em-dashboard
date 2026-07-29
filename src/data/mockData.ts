@@ -1,12 +1,9 @@
 import type {
   TeamMember,
-  HealthEntry,
-  ActionItem,
   AIInsight,
   ActionEntry,
   JiraIssue,
   SlackMessage,
-  InitiativeLoadPoint,
   DeliveryGoal,
 } from '../types'
 
@@ -18,8 +15,6 @@ import type {
 //   `aiInsights`    <- a correlation/LLM pipeline over the two above, not a
 //                      hand-written list (see that comment for why this one
 //                      is architecturally different from the other two)
-// `healthEntries` and `actionItems` are self-reported/app-native data with
-// no single standard API to point to, so they're left as-is.
 
 export const teamMembers: TeamMember[] = [
   { id: 'm1', name: 'Priya Nair', initials: 'PN', role: 'Senior Engineer' },
@@ -27,38 +22,6 @@ export const teamMembers: TeamMember[] = [
   { id: 'm3', name: 'Wei Zhang', initials: 'WZ', role: 'Engineer' },
   { id: 'm4', name: 'Sofia Ramirez', initials: 'SR', role: 'Senior Engineer' },
   { id: 'm5', name: 'Jonas Berg', initials: 'JB', role: 'Engineer (new hire)' },
-]
-
-export const healthEntries: HealthEntry[] = [
-  // Priya - steady, high performer
-  { memberId: 'm1', week: '2026-06-29', sentiment: 4, workload: 3 },
-  { memberId: 'm1', week: '2026-07-06', sentiment: 4, workload: 3 },
-  { memberId: 'm1', week: '2026-07-13', sentiment: 4, workload: 4 },
-  { memberId: 'm1', week: '2026-07-20', sentiment: 3, workload: 4 },
-
-  // Daniel - trending down, workload creeping up
-  { memberId: 'm2', week: '2026-06-29', sentiment: 4, workload: 3 },
-  { memberId: 'm2', week: '2026-07-06', sentiment: 3, workload: 4 },
-  { memberId: 'm2', week: '2026-07-13', sentiment: 3, workload: 4 },
-  { memberId: 'm2', week: '2026-07-20', sentiment: 2, workload: 5 },
-
-  // Wei - stable and content
-  { memberId: 'm3', week: '2026-06-29', sentiment: 4, workload: 3 },
-  { memberId: 'm3', week: '2026-07-06', sentiment: 4, workload: 3 },
-  { memberId: 'm3', week: '2026-07-13', sentiment: 5, workload: 2 },
-  { memberId: 'm3', week: '2026-07-20', sentiment: 4, workload: 3 },
-
-  // Sofia - recovering after a rough patch
-  { memberId: 'm4', week: '2026-06-29', sentiment: 2, workload: 5 },
-  { memberId: 'm4', week: '2026-07-06', sentiment: 3, workload: 4 },
-  { memberId: 'm4', week: '2026-07-13', sentiment: 3, workload: 3 },
-  { memberId: 'm4', week: '2026-07-20', sentiment: 4, workload: 3 },
-
-  // Jonas - new hire, ramping
-  { memberId: 'm5', week: '2026-06-29', sentiment: 3, workload: 2 },
-  { memberId: 'm5', week: '2026-07-06', sentiment: 3, workload: 3 },
-  { memberId: 'm5', week: '2026-07-13', sentiment: 4, workload: 3 },
-  { memberId: 'm5', week: '2026-07-20', sentiment: 4, workload: 3 },
 ]
 
 // Simulated Jira source data — a kanban board's worth of tickets, standing
@@ -437,62 +400,16 @@ export const slackMessages: SlackMessage[] = [
   },
 ]
 
-// Active initiative count per sprint — pairs with velocityHistory above to
-// support the "possible overload" insight (more parallel work, less throughput).
-export const initiativeLoad: InitiativeLoadPoint[] = [
-  { sprint: 'Sprint 22', activeInitiatives: 2 },
-  { sprint: 'Sprint 23', activeInitiatives: 3 },
-  { sprint: 'Sprint 24', activeInitiatives: 4 },
-]
-
-export const actionItems: ActionItem[] = [
-  {
-    id: 'a1',
-    memberId: 'm2',
-    kind: 'one_on_one',
-    title: '1:1 with Daniel — check in on workload',
-    dueDate: '2026-07-29',
-  },
-  {
-    id: 'a2',
-    memberId: 'm5',
-    kind: 'one_on_one',
-    title: '1:1 with Jonas — 30-day ramp check-in',
-    dueDate: '2026-07-30',
-  },
-  {
-    id: 'a3',
-    memberId: 'm4',
-    kind: 'follow_up',
-    title: 'Follow up: personal development goal for Sofia',
-    dueDate: '2026-07-25',
-  },
-  {
-    id: 'a4',
-    memberId: 'm1',
-    kind: 'follow_up',
-    title: 'Send Priya feedback on brown bag presentation',
-    dueDate: '2026-07-31',
-  },
-  {
-    id: 'a5',
-    memberId: 'm3',
-    kind: 'one_on_one',
-    title: '1:1 with Wei — biweekly sync',
-    dueDate: '2026-08-04',
-  },
-]
-
 // Unlike `jiraIssues` and `slackMessages` above, this is not a 1:1 stand-in
 // for an external API — it's the *output* of a correlation step that
 // doesn't exist yet in this app. Each insight here was hand-written to look
 // like what that step should eventually produce: a claim, backed by
-// `sources` that point at real jiraIssues/slackMessages/healthEntries
+// `sources` that point at real jiraIssues/slackMessages
 // records, with a confidence level and a recommended next action.
 //
 // Replacing this with a real pipeline means adding a step (a scheduled job,
 // or an API route called on page load) that:
-//   1. reads the current jiraIssues, slackMessages, and healthEntries
+//   1. reads the current jiraIssues and slackMessages
 //   2. runs rules or an LLM prompt over them looking for the four patterns
 //      this app cares about (delivery_risk, recurring_issue,
 //      unresolved_question, possible_overload)
@@ -601,33 +518,6 @@ export const aiInsights: AIInsight[] = [
     ],
     confidence: 'medium',
     recommendedAction: 'Clarify on-call escalation ownership in #platform-help',
-    status: 'new',
-  },
-  {
-    id: 'i5',
-    category: 'possible_overload',
-    title: 'Daniel may be heading toward burnout, and it is starting to block delivery',
-    summary:
-      'Sentiment and workload have both been trending the wrong way for four weeks, and his most recent PR has stalled without review.',
-    sources: [
-      {
-        type: 'health',
-        refId: 'm2:2026-07-13',
-        label: 'Sentiment 3/5, workload rated heavy (week of Jul 13)',
-      },
-      {
-        type: 'health',
-        refId: 'm2:2026-07-20',
-        label: 'Sentiment 2/5, workload rated heavy (week of Jul 20)',
-      },
-      {
-        type: 'delivery',
-        refId: 'r1',
-        label: 'PR #482 (auth refactor) has had no review activity in 4 days',
-      },
-    ],
-    confidence: 'high',
-    recommendedAction: 'Check in with Daniel on workload and unblock review on PR #482',
     status: 'new',
   },
   {

@@ -16,10 +16,6 @@ export function daysBetween(fromIso: string, toIso: string): number {
   return Math.round((to.getTime() - from.getTime()) / DAY_MS)
 }
 
-export function getActionStatus(isoDate: string): 'overdue' | 'upcoming' {
-  return daysFromToday(isoDate) < 0 ? 'overdue' : 'upcoming'
-}
-
 export function formatRelativeDue(isoDate: string): string {
   const diff = daysFromToday(isoDate)
   if (diff === 0) return 'Today'

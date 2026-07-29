@@ -19,6 +19,14 @@ const PRIORITY_PILL: Record<ActionPriority, { level: StatusLevel; label: string 
 
 function getActionSourcePill(action: ActionEntry, jiraDataSource: JiraDataSource) {
   if (action.source === 'manual') return { level: 'neutral' as const, label: 'Added by you' }
+  if (action.source === 'signal') {
+    return {
+      level: 'warning' as const,
+      label: (action.linkedJiraIssueIds?.length ?? 0) > 0 && jiraDataSource === 'live'
+        ? 'Team signal · Live Jira'
+        : 'Team signal · Demo data',
+    }
+  }
   if ((action.linkedJiraIssueIds?.length ?? 0) > 0) {
     return {
       level: jiraDataSource === 'live' ? ('good' as const) : ('neutral' as const),
@@ -274,6 +282,11 @@ export function Actions({
                     From AI insight: {action.sourceInsightTitle}
                   </button>
                 )}
+                {action.sourceSignalTitle && (
+                  <p className="mt-1 text-xs text-[var(--text-muted)]">
+                    From Team Signal: {action.sourceSignalTitle}
+                  </p>
+                )}
 
                 {acceptingId === action.id ? (
                   <div className="mt-3 space-y-2 rounded-md border border-[var(--border)] p-3">
@@ -495,6 +508,11 @@ export function Actions({
                   >
                     From AI insight: {action.sourceInsightTitle}
                   </button>
+                )}
+                {action.sourceSignalTitle && (
+                  <p className="mt-1 text-xs text-[var(--text-muted)]">
+                    From Team Signal: {action.sourceSignalTitle}
+                  </p>
                 )}
 
                 <div className="mt-3 flex items-center gap-2">
