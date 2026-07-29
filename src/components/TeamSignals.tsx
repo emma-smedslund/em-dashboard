@@ -14,6 +14,7 @@ import {
   TEAM_SIGNAL_STATUSES,
 } from '../types'
 import { StatusPill, type StatusLevel } from './StatusPill'
+import { SlackIntegrationStatus } from './SlackIntegrationStatus'
 
 const SEVERITY_PILL: Record<TeamSignalSeverity, { level: StatusLevel; label: string }> = {
   Info: { level: 'neutral', label: 'Info' },
@@ -76,6 +77,8 @@ export function TeamSignals({
           Emerging patterns from delivery, quality, collaboration, and improvement work.
         </p>
       </div>
+
+      <SlackIntegrationStatus />
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {counts.map(({ status: signalStatus, count }) => (

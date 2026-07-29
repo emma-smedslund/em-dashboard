@@ -421,56 +421,6 @@ export const slackMessages: SlackMessage[] = [
 // determines.
 export const aiInsights: AIInsight[] = [
   {
-    id: 'i1',
-    category: 'delivery_risk',
-    title: 'Three sprint tickets are blocked by the same external dependency',
-    summary:
-      'ENG-1188, ENG-1191, and ENG-1195 are all waiting on the same Payments API v2 contract from the Platform team, with the oldest blocked for 5 days.',
-    sources: [
-      {
-        type: 'jira',
-        refId: 'ENG-1188',
-        label: 'ENG-1188 "Apply promo discount at checkout" — blocked since Jul 23',
-      },
-      {
-        type: 'jira',
-        refId: 'ENG-1191',
-        label: 'ENG-1191 "Refund flow via new payments endpoint" — blocked since Jul 25',
-      },
-      {
-        type: 'jira',
-        refId: 'ENG-1195',
-        label: 'ENG-1195 "Migrate subscription billing to v2 endpoint" — blocked since Jul 26',
-      },
-      {
-        type: 'slack',
-        refId: 's6',
-        label: '#platform-release, Jira Bot, Jul 23 — ENG-1188 automatically flagged as Blocked',
-      },
-    ],
-    confidence: 'high',
-    recommendedAction: 'Escalate the Payments API v2 contract dependency with the Platform team',
-    status: 'accepted',
-  },
-  {
-    id: 'i2',
-    category: 'delivery_risk',
-    title: 'ENG-1190 is at risk of slipping the sprint',
-    summary:
-      'The ticket has been blocked on design sign-off for 4 days with only 4 days left in the sprint.',
-    sources: [
-      {
-        type: 'jira',
-        refId: 'ENG-1190',
-        label: 'ENG-1190 "Add checkout confirmation screen" — blocked on design sign-off since Jul 24',
-      },
-      { type: 'delivery', label: 'Sprint 24 ends Aug 1 — 4 days remain' },
-    ],
-    confidence: 'medium',
-    recommendedAction: 'Escalate ENG-1190 design sign-off to unblock before sprint end',
-    status: 'new',
-  },
-  {
     id: 'i3',
     category: 'recurring_issue',
     title: 'Deploy problems have been raised in four separate threads over two weeks',
@@ -544,23 +494,22 @@ export const aiInsights: AIInsight[] = [
 
 export const actionEntries: ActionEntry[] = [
   {
-    id: 'action-i1',
-    title: 'Escalate the Payments API v2 contract dependency with the Platform team',
+    id: 'action-signal-jira-blocked-work',
+    title: 'Confirm the next step and unblock owner for TFP-15',
     status: 'suggested',
     owner: null,
     dueDate: null,
-    priority: 'high',
-    source: 'ai',
+    priority: 'medium',
+    source: 'signal',
     context:
-      'ENG-1188, ENG-1191, and ENG-1195 are all waiting on the same Payments API v2 contract from the Platform team, with the oldest blocked for 5 days.',
-    createdDate: '2026-07-26',
-    sourceInsightId: 'i1',
-    sourceInsightTitle: 'Three sprint tickets are blocked by the same external dependency',
+      'TFP-15 “Memory leak in dashboard polling” is currently blocked in Jira and needs a clear next step.',
+    createdDate: '2026-07-29',
+    sourceSignalId: 'signal-jira-blocked-work',
+    sourceSignalTitle: 'Blocked work needs follow-up',
     sourceEvidence: [
-      'ENG-1188 "Apply promo discount at checkout" — blocked since Jul 23',
-      'ENG-1191 "Refund flow via new payments endpoint" — blocked since Jul 25',
-      'ENG-1195 "Migrate subscription billing to v2 endpoint" — blocked since Jul 26',
+      'TFP-15 “Memory leak in dashboard polling” — Blocked in Jira',
     ],
+    linkedJiraIssueIds: ['TFP-15'],
   },
   {
     id: 'action-i6',

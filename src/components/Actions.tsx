@@ -238,7 +238,7 @@ export function Actions({
 
       <section>
         <h2 className="mb-3 text-sm font-semibold text-[var(--text-primary)]">
-          Suggested by AI {suggested.length > 0 && `(${suggested.length})`}
+          Suggested follow-ups {suggested.length > 0 && `(${suggested.length})`}
         </h2>
         {suggested.length === 0 ? (
           <p className="text-sm text-[var(--text-muted)]">No pending suggestions.</p>
