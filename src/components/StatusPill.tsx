@@ -16,13 +16,13 @@ export function StatusPill({
   label: string
 }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border)] px-2.5 py-1 text-xs font-medium text-[var(--text-secondary)]">
+    <span className="inline-flex w-fit max-w-full items-center gap-1.5 rounded-full border border-[var(--border)] px-2.5 py-1 text-xs font-medium text-[var(--text-secondary)]">
       <span
-        className="h-2 w-2 rounded-full"
+        className="h-2 w-2 shrink-0 rounded-full"
         style={{ background: DOT_COLOR[level] }}
         aria-hidden="true"
       />
-      {label}
+      <span className="min-w-0 break-words">{label}</span>
     </span>
   )
 }

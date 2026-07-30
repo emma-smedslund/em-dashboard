@@ -33,7 +33,7 @@ export function SlackIntegrationStatus({
         Slack integration status
       </summary>
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex min-w-0 flex-col items-start gap-2 sm:flex-row sm:items-center">
           <StatusPill
             level={connection ? 'good' : 'neutral'}
             label={loading ? 'Checking Slack…' : connection ? 'Slack connected' : 'Slack not connected'}
@@ -58,7 +58,7 @@ export function SlackIntegrationStatus({
       <p className="mt-2 text-xs text-[var(--text-muted)]">
         Phase 4 reads recent messages from joined channels. The app uses demo Slack data if retrieval fails.
       </p>
-      <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-[var(--border)] pt-3">
+      <div className="mt-3 flex flex-col items-start gap-2 border-t border-[var(--border)] pt-3 sm:flex-row sm:items-center">
         <StatusPill
           level={messageSource === 'live' ? 'good' : 'neutral'}
           label={messageSource === 'live' ? 'Live messages' : 'Demo messages'}
@@ -86,7 +86,7 @@ export function SlackIntegrationStatus({
             </p>
             <ul className="mt-2 grid gap-2 sm:grid-cols-2">
               {channels.data.channels.map((channel) => (
-                <li key={channel.id} className="flex items-center justify-between gap-2 rounded-md bg-[var(--page-plane)] p-2">
+                <li key={channel.id} className="flex flex-col items-start gap-2 rounded-md bg-[var(--page-plane)] p-2 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
                     <p className="truncate text-xs font-medium text-[var(--text-primary)]">#{channel.name}</p>
                     <p className="truncate text-[10px] text-[var(--text-muted)]">{channel.id}</p>
@@ -98,7 +98,7 @@ export function SlackIntegrationStatus({
                 </li>
               ))}
               {channels.data.missingChannels.map((channel) => (
-                <li key={channel.name} className="flex items-center justify-between gap-2 rounded-md bg-[var(--page-plane)] p-2">
+                <li key={channel.name} className="flex flex-col items-start gap-2 rounded-md bg-[var(--page-plane)] p-2 sm:flex-row sm:items-center sm:justify-between">
                   <p className="truncate text-xs font-medium text-[var(--text-primary)]">#{channel.name}</p>
                   <StatusPill level="critical" label="Not found" />
                 </li>

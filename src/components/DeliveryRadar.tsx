@@ -60,7 +60,7 @@ export function DeliveryRadar({
   if (!ready) {
     return (
       <div className="space-y-4" aria-live="polite" aria-busy="true">
-        <div className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-1)] px-3 py-2">
+        <div className="flex flex-col items-start gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-1)] px-3 py-2 sm:flex-row sm:items-center">
           <StatusPill level="neutral" label="Connecting to Jira" />
           <span className="text-xs text-[var(--text-muted)]">Loading current delivery data…</span>
         </div>
@@ -127,7 +127,7 @@ export function DeliveryRadar({
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-1)] px-3 py-2">
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-col items-start gap-2 sm:flex-row sm:items-center">
           <StatusPill
             level={dataSource === 'live' ? 'good' : 'neutral'}
             label={dataSource === 'live' ? `Live Jira · ${projectKey ?? ''}` : 'Demo Jira data'}
@@ -206,7 +206,7 @@ export function DeliveryRadar({
           )}
         </div>
 
-        <div className="mt-4 flex flex-wrap items-start justify-between gap-3 border-t border-[var(--border)] pt-4">
+        <div className="mt-4 flex flex-col items-start gap-3 border-t border-[var(--border)] pt-4 sm:flex-row sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">Goal health</p>
             <p className="mt-1 text-xs text-[var(--text-secondary)]">{goalHealth.explanation}</p>
@@ -227,7 +227,7 @@ export function DeliveryRadar({
                 return (
                 <li key={issue.id} className="flex items-center justify-between gap-3 py-2.5 text-sm">
                   <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
                       {issue.url ? (
                         <a href={issue.url} target="_blank" rel="noreferrer" className="font-medium text-[var(--series-blue)] hover:underline">{issue.id}</a>
                       ) : (
@@ -345,7 +345,7 @@ export function DeliveryRadar({
             {highWip.map(({ assigneeId, name, count }) => (
               <li
                 key={assigneeId}
-                className="flex items-center justify-between gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-3"
+                className="flex flex-col items-start gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
               >
                 <span className="text-sm text-[var(--text-primary)]">{name}</span>
                 <StatusPill level="critical" label={`${count} issues in progress`} />
@@ -368,7 +368,7 @@ export function DeliveryRadar({
             {stale.map(({ issue, daysStale }) => (
               <li
                 key={issue.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-3"
+                className="flex flex-col items-start gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
               >
                 <div className="min-w-0">
                   {issue.url ? (
@@ -405,7 +405,7 @@ export function DeliveryRadar({
                 key={issue.id}
                 className="rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-3"
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-col items-start gap-2 sm:flex-row sm:justify-between sm:gap-3">
                   <p className="text-sm text-[var(--text-primary)]">
                     {issue.id} · {issue.title}
                   </p>

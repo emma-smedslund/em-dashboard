@@ -104,19 +104,21 @@ export function TeamSignals({
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-1)] px-3 py-2">
-        <StatusPill
-          level={jiraDataSource === 'live' ? 'good' : 'neutral'}
-          label={jiraDataSource === 'live' ? 'Live Jira' : 'Demo Jira fallback'}
-        />
-        <StatusPill
-          level={slackSource === 'live' ? 'good' : 'neutral'}
-          label={slackSource === 'live' ? 'Live Slack' : 'Demo Slack fallback'}
-        />
+      <div className="rounded-lg border border-[var(--border)] bg-[var(--surface-1)] px-3 py-2">
+        <div className="flex flex-wrap gap-2">
+          <StatusPill
+            level={jiraDataSource === 'live' ? 'good' : 'neutral'}
+            label={jiraDataSource === 'live' ? 'Live Jira' : 'Demo Jira fallback'}
+          />
+          <StatusPill
+            level={slackSource === 'live' ? 'good' : 'neutral'}
+            label={slackSource === 'live' ? 'Live Slack' : 'Demo Slack fallback'}
+          />
+        </div>
         <span className="text-xs text-[var(--text-muted)]">
           Auto-refreshes every 5 minutes while this page is open.
         </span>
-        <span className="text-xs text-[var(--text-muted)]">
+        <span className="ml-2 text-xs text-[var(--text-muted)] max-sm:ml-0 max-sm:mt-1 max-sm:block">
           Last synced: Jira {jiraSyncedAt ? new Date(jiraSyncedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : 'demo fallback'} · Slack {slackSyncedAt ? new Date(slackSyncedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : 'demo fallback'}
         </span>
       </div>
@@ -145,7 +147,7 @@ export function TeamSignals({
         <ul className="space-y-3">
           {visibleSignals.map((signal) => (
             <li key={signal.id} className="rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between">
                 <div className="min-w-0">
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
                     {signal.category}

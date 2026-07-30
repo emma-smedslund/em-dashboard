@@ -90,7 +90,7 @@ function LinkedJiraIssues({
           }
           const status = getJiraStatus(issue)
           return (
-            <li key={id} className="flex flex-wrap items-center justify-between gap-2">
+            <li key={id} className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
               {issue.url ? (
                 <a
                   href={issue.url}
@@ -219,7 +219,7 @@ export function Actions({
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-1)] px-3 py-2">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex min-w-0 flex-col items-start gap-2 sm:flex-row sm:items-center">
           <StatusPill
             level={jiraDataSource === 'live' ? 'good' : 'neutral'}
             label={jiraDataSource === 'live' ? `Live Jira · ${projectKey ?? ''}` : 'Demo Jira data'}
@@ -629,7 +629,7 @@ export function Actions({
             {resolved.map((action) => (
               <li
                 key={action.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-3 opacity-70"
+                className="flex flex-col items-start gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-3 opacity-70 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm text-[var(--text-primary)]">{action.title}</p>
