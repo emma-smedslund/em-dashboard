@@ -91,14 +91,19 @@ function App() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       <header className="mb-8 flex flex-wrap items-baseline justify-between gap-2">
-        <div>
+        <button
+          type="button"
+          onClick={() => setActiveTab('delivery')}
+          aria-label="Go to Delivery Radar"
+          className="rounded-md text-left transition-opacity hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--series-blue)]"
+        >
           <h1 className="text-2xl font-semibold text-[var(--text-primary)]">
             Leo Freya Tech
           </h1>
           <p className="text-sm text-[var(--text-muted)]">
             Team Frontend Platform
           </p>
-        </div>
+        </button>
         <p className="text-sm text-[var(--text-muted)]">
           As of {formatAsOf(new Date())}
         </p>

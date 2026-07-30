@@ -421,7 +421,10 @@ export function Actions({
           <button
             type="button"
             onClick={() => setShowAddForm((s) => !s)}
-            className="rounded-md border border-[var(--border)] px-3 py-1.5 text-xs font-medium text-[var(--text-secondary)] hover:bg-[var(--page-plane)]"
+            className={showAddForm
+              ? 'rounded-md border border-[var(--border)] px-3 py-2 text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--page-plane)]'
+              : 'rounded-md bg-[var(--series-blue)] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:opacity-90'
+            }
           >
             {showAddForm ? 'Cancel' : '+ Add action'}
           </button>
