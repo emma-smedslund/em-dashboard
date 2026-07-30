@@ -4,6 +4,8 @@ An AI-assisted decision-support dashboard for Engineering Managers. It turns fra
 
 **Live demo:** [em-dashboard-eight.vercel.app](https://em-dashboard-eight.vercel.app/)
 
+> **AI implementation note:** This MVP does not currently call an external language model. Team Signals are generated through transparent, deterministic rules that simulate the intended AI-assisted decision-support experience. The architecture is designed so that an LLM-based interpretation layer could be added later without changing the core product flow.
+
 ## Why this exists
 
 Engineering Managers rarely lack data. The harder problem is noticing meaningful patterns across delivery tools early enough to act on them.
@@ -77,6 +79,7 @@ An active retrospective action can become a Team Signal after 14 days, connectin
 | Delivery goal, linked issues, actions, decisions, and signal statuses | User-entered, stored in `localStorage` | Frontend-only interaction and persistence |
 | Seeded team context and actions | Demo | A reliable interview scenario and fallback experience |
 | GitHub review metrics | Demo only | An intentionally limited example; a live integration is deferred until collaborative PR data exists |
+| AI interpretation | Simulated through deterministic rules | Produces reliable, explainable signals without an external LLM API |
 
 Jira and Slack refresh when the app loads, on manual request, and automatically every five minutes while the page is visible. If an integration fails, the dashboard remains usable with clearly labelled demo fallback data.
 
