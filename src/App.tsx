@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { TeamSignals } from './components/TeamSignals'
 import { DeliveryRadar } from './components/DeliveryRadar'
-import { AIInsights } from './components/AIInsights'
 import { Actions } from './components/Actions'
 import { TabNav } from './components/TabNav'
 import { useActions } from './hooks/useActions'
@@ -9,19 +8,17 @@ import { useDeliveryGoal } from './hooks/useDeliveryGoal'
 import { useJiraIssues } from './hooks/useJiraIssues'
 import {
   teamMembers,
-  aiInsights,
   actionEntries,
   jiraIssues as demoJiraIssues,
   slackMessages,
   deliveryGoalSeed,
 } from './data/mockData'
 import { DEMO_REFERENCE_DATE, formatAsOf } from './lib/date'
-import { generateJiraInsights } from './lib/jiraInsights'
 import { detectTeamSignals } from './lib/teamSignals'
 import { pullRequestPeriodMetrics, retrospectiveActionPoints } from './data/teamSignalData'
 import { useTeamSignals } from './hooks/useTeamSignals'
 import { useSlackMessages } from './hooks/useSlackMessages'
-import { generateSlackInsights } from './lib/slackInsights'
+import { applyTeamDisplayNamesToJiraIssues, resolveTeamMembersFromSlack } from './lib/teamIdentity'
 
 const TABS = [
   {
@@ -37,23 +34,11 @@ const TABS = [
   {
     id: 'actions',
     label: 'Actions',
-    description: 'AI-suggested and manually added follow-ups, from proposal to completion.',
-  },
-  {
-    id: 'insights',
-    label: 'AI Insights',
-    description: 'Broader interpretation across multiple engineering signals and sources.',
+    description: 'Suggested and manually added follow-ups, from proposal to completion.',
   },
 ] as const
 
 type TabId = (typeof TABS)[number]['id']
-
-const NON_JIRA_DEMO_INSIGHTS = aiInsights.filter(
-  (insight) => !insight.sources.some((source) => source.type === 'jira'),
-)
-const DELIVERY_DEMO_INSIGHTS = NON_JIRA_DEMO_INSIGHTS.filter(
-  (insight) => !insight.sources.some((source) => source.type === 'slack'),
-)
 
 function App() {
   const [activeTab, setActiveTab] = useState<TabId>('delivery')
@@ -61,20 +46,16 @@ function App() {
   const { goal, setText, linkIssue, unlinkIssue } = useDeliveryGoal(deliveryGoalSeed)
   const jira = useJiraIssues(demoJiraIssues)
   const slack = useSlackMessages(slackMessages)
-  const jiraIssues = useMemo(() => (jira.ready ? jira.issues : []), [jira.issues, jira.ready])
-  const generatedJiraInsights = useMemo(
-    () => generateJiraInsights(jiraIssues, jira.source === 'live' ? new Date() : DEMO_REFERENCE_DATE),
-    [jiraIssues, jira.source],
+  const displayedTeamMembers = useMemo(
+    () => resolveTeamMembersFromSlack(teamMembers, slack.source === 'live' ? slack.messages : []),
+    [slack.messages, slack.source],
   )
-  const insightSeed = useMemo(
-    () => [
-      ...generatedJiraInsights,
-      ...(slack.source === 'live'
-        ? generateSlackInsights(slack.messages)
-        : NON_JIRA_DEMO_INSIGHTS),
-      ...(slack.source === 'live' ? DELIVERY_DEMO_INSIGHTS : []),
-    ],
-    [generatedJiraInsights, slack.messages, slack.source],
+  const jiraIssues = useMemo(
+    () => applyTeamDisplayNamesToJiraIssues(
+      jira.ready ? jira.issues : [],
+      displayedTeamMembers,
+    ),
+    [displayedTeamMembers, jira.issues, jira.ready],
   )
   const detectedTeamSignals = useMemo(
     () => detectTeamSignals({
@@ -90,25 +71,22 @@ function App() {
   )
   const { signals: teamSignals, setSignalStatus } = useTeamSignals(detectedTeamSignals)
   const {
-    insights,
     actions,
-    suggestActionFromInsight,
     suggestActionFromSignal,
-    dismissInsight,
     acceptAction,
     dismissAction,
     completeAction,
     addManualAction,
     confirmation,
     clearConfirmation,
-  } = useActions(insightSeed, actionEntries)
+  } = useActions(actionEntries, displayedTeamMembers)
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       <header className="mb-8 flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <h1 className="text-2xl font-semibold text-[var(--text-primary)]">
-            Leo Freya Tech
+            Leo FreYa Tech
           </h1>
           <p className="text-sm text-[var(--text-muted)]">
             Team Frontend Platform
@@ -132,12 +110,12 @@ function App() {
         {activeTab === 'delivery' && (
           <DeliveryRadar
             issues={jiraIssues}
-            members={teamMembers}
+            members={displayedTeamMembers}
             goal={goal}
             onSetGoalText={setText}
             onLinkIssue={linkIssue}
             onUnlinkIssue={unlinkIssue}
-            onViewInsights={() => setActiveTab('insights')}
+            onViewSignals={() => setActiveTab('signals')}
             dataSource={jira.source}
             projectKey={jira.projectKey}
             syncedAt={jira.syncedAt}
@@ -147,32 +125,10 @@ function App() {
             onRefresh={jira.refresh}
           />
         )}
-        {activeTab === 'insights' && (
-          <AIInsights
-            insights={insights}
-            jiraIssues={jiraIssues}
-            slackMessages={slack.messages}
-            slackDataSource={slack.source}
-            slackSyncedAt={slack.syncedAt}
-            slackLoading={slack.loading}
-            slackError={slack.error}
-            onRefreshSlack={slack.refresh}
-            members={teamMembers}
-            jiraDataSource={jira.source}
-            projectKey={jira.projectKey}
-            syncedAt={jira.syncedAt}
-            loading={jira.loading}
-            error={jira.error}
-            jiraInsightCount={generatedJiraInsights.length}
-            onRefreshJira={jira.refresh}
-            onAddToActions={suggestActionFromInsight}
-            onDismiss={dismissInsight}
-          />
-        )}
         {activeTab === 'actions' && (
           <Actions
             actions={actions}
-            members={teamMembers}
+            members={displayedTeamMembers}
             jiraIssues={jiraIssues}
             jiraDataSource={jira.source}
             projectKey={jira.projectKey}
@@ -184,13 +140,14 @@ function App() {
             onDismissAction={dismissAction}
             onCompleteAction={completeAction}
             onAddManualAction={addManualAction}
-            onViewInsight={() => setActiveTab('insights')}
           />
         )}
         {activeTab === 'signals' && (
           <TeamSignals
             signals={teamSignals}
             jiraIssues={jiraIssues}
+            jiraDataSource={jira.source}
+            slackMessages={slack.messages}
             slackSource={slack.source}
             slackMessageCount={slack.messages.length}
             slackSyncedAt={slack.syncedAt}

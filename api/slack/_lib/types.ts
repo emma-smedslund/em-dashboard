@@ -53,3 +53,9 @@ export interface SlackUserInfoResponse {
     profile?: { display_name?: string; real_name?: string }
   }
 }
+
+export interface SlackPermalinkResponse {
+  ok?: boolean
+  error?: string
+  permalink?: string
+}

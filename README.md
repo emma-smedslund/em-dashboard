@@ -30,7 +30,9 @@ Phase 4 reads the latest 14 days, up to 100 root messages per channel, from:
 - `#platform-release`
 - `#incidents`
 
-`/api/slack/health` verifies authentication, `/api/slack/channels` verifies channel access, and `/api/slack/messages` retrieves and normalizes messages. The frontend falls back to clearly labelled demo data when live retrieval fails.
+`/api/slack/health` verifies authentication, `/api/slack/channels` verifies channel access, and `/api/slack/messages` retrieves and normalizes messages. `/api/slack/permalink` resolves a validated evidence reference to the original Slack message when the user follows a source link. The frontend falls back to clearly labelled demo data when live retrieval fails.
+
+Thread contents are intentionally outside the current MVP. The app uses the root message and its reply count while the core flow is validated: engineering data → interpreted signal → Engineering Manager decision → action.
 
 ## Frontend stack
 

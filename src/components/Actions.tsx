@@ -21,19 +21,17 @@ function getActionSourcePill(action: ActionEntry, jiraDataSource: JiraDataSource
   if (action.source === 'manual') return { level: 'neutral' as const, label: 'Added by you' }
   if (action.source === 'signal') {
     return {
-      level: 'warning' as const,
-      label: (action.linkedJiraIssueIds?.length ?? 0) > 0 && jiraDataSource === 'live'
-        ? 'Team signal · Live Jira'
-        : 'Team signal · Demo data',
+      level: action.sourceDataMode === 'live' ? ('good' as const) : ('neutral' as const),
+      label: `Team signal · ${action.sourceDataMode === 'live' ? 'Live data' : 'Demo data'}`,
     }
   }
   if ((action.linkedJiraIssueIds?.length ?? 0) > 0) {
     return {
       level: jiraDataSource === 'live' ? ('good' as const) : ('neutral' as const),
-      label: jiraDataSource === 'live' ? 'AI suggested · Live Jira' : 'AI suggested · Demo Jira',
+      label: jiraDataSource === 'live' ? 'Suggested follow-up · Live Jira' : 'Suggested follow-up · Demo Jira',
     }
   }
-  return { level: 'neutral' as const, label: 'AI suggested · Demo signal' }
+  return { level: 'neutral' as const, label: 'Suggested follow-up · Demo data' }
 }
 
 const EMPTY_MANUAL_FORM = {
@@ -126,7 +124,6 @@ export function Actions({
   onDismissAction,
   onCompleteAction,
   onAddManualAction,
-  onViewInsight,
 }: {
   actions: ActionEntry[]
   members: TeamMember[]
@@ -151,7 +148,6 @@ export function Actions({
     context: string
     linkedJiraIssueId: string | null
   }) => void
-  onViewInsight?: (insightId: string) => void
 }) {
   const [showAddForm, setShowAddForm] = useState(false)
   const [manualForm, setManualForm] = useState(EMPTY_MANUAL_FORM)
@@ -170,6 +166,12 @@ export function Actions({
     return daysFromToday(a.dueDate) - daysFromToday(b.dueDate)
   })
   const resolved = actions.filter((a) => a.status === 'completed' || a.status === 'dismissed')
+  const decisions = actions
+    .filter((action) => action.status !== 'suggested')
+    .sort((a, b) =>
+      (b.decisionDate ?? b.completedDate ?? b.createdDate)
+        .localeCompare(a.decisionDate ?? a.completedDate ?? a.createdDate),
+    )
 
   function startAccept(action: ActionEntry) {
     setAcceptingId(action.id)
@@ -231,10 +233,42 @@ export function Actions({
       </div>
 
       <div className="rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-3 text-xs text-[var(--text-secondary)]">
-        AI can surface suggested actions from patterns it detects across the team, but it
-        never assigns an owner, sets a due date, or closes anything on its own. Every
-        suggestion waits below until you accept or dismiss it.
+        Pattern detection can surface suggested actions, but it never assigns an owner,
+        sets a due date, or closes anything on its own. Every suggestion waits below until
+        the Engineering Manager accepts or dismisses it.
       </div>
+
+      <details className="rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-3">
+        <summary className="cursor-pointer text-sm font-semibold text-[var(--text-primary)]">
+          Decisions Log ({decisions.length})
+        </summary>
+        <p className="mt-1 text-xs text-[var(--text-muted)]">
+          A lightweight record of decisions made by the Engineering Manager.
+        </p>
+        {decisions.length > 0 && (
+          <ul className="mt-3 divide-y divide-[var(--border)]">
+            {decisions.slice(0, 8).map((action) => (
+              <li key={`decision-${action.id}`} className="flex items-start justify-between gap-3 py-2">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-[var(--text-primary)]">{action.title}</p>
+                  <p className="mt-0.5 text-xs text-[var(--text-muted)]">
+                    {action.status === 'active'
+                      ? `Accepted${action.owner ? ` · Owner: ${action.owner}` : ''}`
+                      : action.status === 'completed'
+                        ? 'Completed'
+                        : 'Dismissed or archived'}
+                    {' · '}{action.decisionDate ?? action.completedDate ?? action.createdDate}
+                  </p>
+                </div>
+                <StatusPill
+                  level={action.status === 'completed' ? 'good' : action.status === 'active' ? 'warning' : 'neutral'}
+                  label={action.source === 'manual' ? 'Manual decision' : 'Signal follow-up'}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+      </details>
 
       <section>
         <h2 className="mb-3 text-sm font-semibold text-[var(--text-primary)]">
@@ -274,13 +308,9 @@ export function Actions({
                 />
 
                 {action.sourceInsightTitle && (
-                  <button
-                    type="button"
-                    onClick={() => action.sourceInsightId && onViewInsight?.(action.sourceInsightId)}
-                    className="mt-1 text-xs text-[var(--series-blue)] hover:underline"
-                  >
-                    From AI insight: {action.sourceInsightTitle}
-                  </button>
+                  <p className="mt-1 text-xs text-[var(--text-muted)]">
+                    From earlier interpreted signal: {action.sourceInsightTitle}
+                  </p>
                 )}
                 {action.sourceSignalTitle && (
                   <p className="mt-1 text-xs text-[var(--text-muted)]">
@@ -501,13 +531,9 @@ export function Actions({
                 </p>
 
                 {action.sourceInsightTitle && (
-                  <button
-                    type="button"
-                    onClick={() => action.sourceInsightId && onViewInsight?.(action.sourceInsightId)}
-                    className="mt-1 text-xs text-[var(--series-blue)] hover:underline"
-                  >
-                    From AI insight: {action.sourceInsightTitle}
-                  </button>
+                  <p className="mt-1 text-xs text-[var(--text-muted)]">
+                    From earlier interpreted signal: {action.sourceInsightTitle}
+                  </p>
                 )}
                 {action.sourceSignalTitle && (
                   <p className="mt-1 text-xs text-[var(--text-muted)]">

@@ -81,11 +81,13 @@ export function isSlackMessagesResponse(value: unknown): value is SlackMessagesR
         isRecord(message) &&
         isString(message.id) &&
         isString(message.channel) &&
+        (!('authorId' in message) || isString(message.authorId)) &&
         isString(message.authorName) &&
         isString(message.timestamp) &&
         isString(message.text) &&
         isString(message.threadId) &&
-        typeof message.replyCount === 'number',
+        typeof message.replyCount === 'number' &&
+        (!('url' in message) || isString(message.url)),
     ) &&
     typeof value.windowDays === 'number' &&
     typeof value.channelCount === 'number' &&

@@ -7,6 +7,8 @@ import type {
   TeamSignalSource,
   TeamSignalStatus,
   SlackDataSource,
+  SlackMessage,
+  JiraDataSource,
 } from '../types'
 import {
   TEAM_SIGNAL_CATEGORIES,
@@ -30,11 +32,19 @@ const STATUS_PILL: Record<TeamSignalStatus, StatusLevel> = {
   Resolved: 'neutral',
 }
 
+const CONFIDENCE_PILL: Record<TeamSignal['confidence'], { level: StatusLevel; label: string }> = {
+  high: { level: 'good', label: 'High confidence' },
+  medium: { level: 'warning', label: 'Medium confidence' },
+  low: { level: 'neutral', label: 'Low confidence' },
+}
+
 type FilterValue<T extends string> = T | 'All'
 
 export function TeamSignals({
   signals,
   jiraIssues,
+  jiraDataSource,
+  slackMessages,
   slackSource,
   slackMessageCount,
   slackSyncedAt,
@@ -46,6 +56,8 @@ export function TeamSignals({
 }: {
   signals: TeamSignal[]
   jiraIssues: JiraIssue[]
+  jiraDataSource: JiraDataSource
+  slackMessages: SlackMessage[]
   slackSource: SlackDataSource
   slackMessageCount: number
   slackSyncedAt: string | null
@@ -90,6 +102,20 @@ export function TeamSignals({
         </p>
       </div>
 
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-1)] px-3 py-2">
+        <StatusPill
+          level={jiraDataSource === 'live' ? 'good' : 'neutral'}
+          label={jiraDataSource === 'live' ? 'Live Jira' : 'Demo Jira fallback'}
+        />
+        <StatusPill
+          level={slackSource === 'live' ? 'good' : 'neutral'}
+          label={slackSource === 'live' ? 'Live Slack' : 'Demo Slack fallback'}
+        />
+        <span className="text-xs text-[var(--text-muted)]">
+          GitHub and retrospective examples use demo data.
+        </span>
+      </div>
+
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {counts.map(({ status: signalStatus, count }) => (
           <div key={signalStatus} className="rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-3">
@@ -123,13 +149,17 @@ export function TeamSignals({
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   <StatusPill level={SEVERITY_PILL[signal.severity].level} label={SEVERITY_PILL[signal.severity].label} />
+                  <StatusPill
+                    level={CONFIDENCE_PILL[signal.confidence].level}
+                    label={CONFIDENCE_PILL[signal.confidence].label}
+                  />
                   <StatusPill level={STATUS_PILL[signal.status]} label={signal.status} />
                 </div>
               </div>
 
               <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr]">
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">Derived pattern</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">Why it matters</p>
                   <p className="mt-1 text-sm text-[var(--text-secondary)]">{signal.summary}</p>
                 </div>
                 <div>
@@ -137,11 +167,16 @@ export function TeamSignals({
                   <ul className="mt-1 space-y-1">
                     {signal.evidence.map((item, index) => {
                       const jiraIssue = item.refId ? jiraIssues.find((issue) => issue.id === item.refId) : undefined
+                      const slackMessage = item.refId ? slackMessages.find((message) => message.id === item.refId) : undefined
                       return (
                         <li key={`${signal.id}-evidence-${index}`} className="text-xs text-[var(--text-secondary)]">
                           {jiraIssue?.url ? (
                             <a href={jiraIssue.url} target="_blank" rel="noreferrer" className="text-[var(--series-blue)] hover:underline">
                               {item.label}
+                            </a>
+                          ) : slackMessage?.url ? (
+                            <a href={slackMessage.url} target="_blank" rel="noreferrer" className="text-[var(--series-blue)] hover:underline">
+                              {item.label} ↗
                             </a>
                           ) : item.label}
                         </li>

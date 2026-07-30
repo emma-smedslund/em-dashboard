@@ -23,7 +23,7 @@ export function DeliveryRadar({
   onSetGoalText,
   onLinkIssue,
   onUnlinkIssue,
-  onViewInsights,
+  onViewSignals,
   dataSource,
   projectKey,
   syncedAt,
@@ -38,7 +38,7 @@ export function DeliveryRadar({
   onSetGoalText: (text: string) => void
   onLinkIssue: (issueId: string) => void
   onUnlinkIssue: (issueId: string) => void
-  onViewInsights?: () => void
+  onViewSignals?: () => void
   dataSource: JiraDataSource
   projectKey: string | null
   syncedAt: string | null
@@ -427,13 +427,13 @@ export function DeliveryRadar({
             {blocked.length} blocked · {crossTeamCount} cross-team{' '}
             {crossTeamCount === 1 ? 'dependency' : 'dependencies'} · {stale.length} stale
           </p>
-          {onViewInsights && (
+          {onViewSignals && (
             <button
               type="button"
-              onClick={onViewInsights}
+              onClick={onViewSignals}
               className="shrink-0 text-xs text-[var(--series-blue)] hover:underline"
             >
-              View related AI Insights
+              View related signals
             </button>
           )}
         </div>

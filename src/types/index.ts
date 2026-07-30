@@ -42,42 +42,16 @@ export interface DeliveryGoal {
 export interface SlackMessage {
   id: string
   channel: string
+  authorId?: string // stable Slack user or bot id when using live data
   authorName: string
   timestamp: string // ISO datetime
   text: string
   threadId: string
   replyCount: number
+  url?: string // server-side redirect to the original Slack message
 }
 
 export type SlackDataSource = 'live' | 'demo'
-
-export type InsightCategory =
-  | 'delivery_risk'
-  | 'recurring_issue'
-  | 'unresolved_question'
-  | 'possible_overload'
-
-export type SignalSourceType = 'jira' | 'slack' | 'delivery'
-
-export interface InsightSource {
-  type: SignalSourceType
-  label: string // human-readable evidence line, always shown
-  // Links to a concrete record when present: JiraIssue.id or SlackMessage.id.
-  // Omitted for aggregate/
-  // statistical evidence (e.g. a velocity trend) that has no single record.
-  refId?: string
-}
-
-export interface AIInsight {
-  id: string
-  title: string
-  summary: string
-  category: InsightCategory
-  sources: InsightSource[] // the evidence, each pointing at a source signal
-  confidence: 'low' | 'medium' | 'high'
-  recommendedAction: string
-  status: 'new' | 'accepted' | 'dismissed'
-}
 
 export type ActionStatus = 'suggested' | 'active' | 'completed' | 'dismissed'
 export type ActionPriority = 'low' | 'medium' | 'high'
@@ -100,6 +74,8 @@ export interface ActionEntry {
   linkedJiraIssueIds?: string[] // live Jira references; Jira status remains read-only in this app
   sourceSignalId?: string
   sourceSignalTitle?: string
+  sourceDataMode?: 'live' | 'demo'
+  decisionDate?: string
 }
 
 export const TEAM_SIGNAL_CATEGORIES = [
@@ -133,6 +109,7 @@ export interface TeamSignal {
   summary: string
   category: TeamSignalCategory
   severity: TeamSignalSeverity
+  confidence: 'low' | 'medium' | 'high'
   source: TeamSignalSource
   sourceMode: 'live' | 'demo'
   detectedAt: string

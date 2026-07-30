@@ -100,11 +100,13 @@ export async function getRecentSlackMessages() {
       rawMessages.map((message) => ({
         id: `${channel.id}:${message.ts!}`,
         channel: `#${channel.name}`,
+        authorId: message.user ?? message.bot_id,
         authorName: authorName(message, userNames),
         timestamp: timestampToIso(message.ts!),
         text: message.text!,
         threadId: `${channel.id}:${message.thread_ts ?? message.ts!}`,
         replyCount: message.reply_count ?? 0,
+        url: `/api/slack/permalink?channel=${encodeURIComponent(channel.id)}&message_ts=${encodeURIComponent(message.ts!)}`,
       })),
     )
     .sort((a, b) => b.timestamp.localeCompare(a.timestamp))

@@ -1,6 +1,5 @@
 import type {
   TeamMember,
-  AIInsight,
   ActionEntry,
   JiraIssue,
   SlackMessage,
@@ -12,16 +11,13 @@ import type {
 // actual integration points — see the comment directly above each:
 //   `jiraIssues`    <- Jira REST API
 //   `slackMessages` <- Slack Web API
-//   `aiInsights`    <- a correlation/LLM pipeline over the two above, not a
-//                      hand-written list (see that comment for why this one
-//                      is architecturally different from the other two)
 
 export const teamMembers: TeamMember[] = [
-  { id: 'm1', name: 'Freya', initials: 'F', role: 'Software Engineer' },
+  { id: 'm1', name: 'Freya Vanir', initials: 'FV', role: 'Software Engineer' },
   { id: 'm2', name: 'Daniel Osei', initials: 'DO', role: 'Engineer' },
   { id: 'm3', name: 'Wei Zhang', initials: 'WZ', role: 'Engineer' },
   { id: 'm4', name: 'Emma', initials: 'E', role: 'Engineering Manager' },
-  { id: 'm5', name: 'Leo', initials: 'L', role: 'Software Engineer' },
+  { id: 'm5', name: 'Leo Herculeus', initials: 'LH', role: 'Software Engineer' },
 ]
 
 // Simulated Jira source data — a kanban board's worth of tickets, standing
@@ -85,7 +81,7 @@ export const jiraIssues: JiraIssue[] = [
     epic: 'Design System v2',
     updatedDate: '2026-07-26',
   },
-  // Leo is carrying five concurrent tickets — the High WIP example.
+  // Leo Herculeus is carrying five concurrent tickets — the High WIP example.
   {
     id: 'TFP-5',
     title: 'Fix pagination bug in admin table',
@@ -356,7 +352,7 @@ export const slackMessages: SlackMessage[] = [
   {
     id: 's4',
     channel: '#platform-release',
-    authorName: 'Freya',
+    authorName: 'Freya Vanir',
     timestamp: '2026-07-27T16:20:00',
     text: 'Deploy pipeline timed out on staging again — this is the fourth time this sprint.',
     threadId: 't4',
@@ -374,7 +370,7 @@ export const slackMessages: SlackMessage[] = [
   {
     id: 's5',
     channel: '#platform-help',
-    authorName: 'Leo',
+    authorName: 'Leo Herculeus',
     timestamp: '2026-07-25T10:00:00',
     text: 'Quick question — who owns the on-call escalation runbook now that Alex has left the team?',
     threadId: 't5',
@@ -400,98 +396,6 @@ export const slackMessages: SlackMessage[] = [
   },
 ]
 
-// Unlike `jiraIssues` and `slackMessages` above, this is not a 1:1 stand-in
-// for an external API — it's the *output* of a correlation step that
-// doesn't exist yet in this app. Each insight here was hand-written to look
-// like what that step should eventually produce: a claim, backed by
-// `sources` that point at real jiraIssues/slackMessages
-// records, with a confidence level and a recommended next action.
-//
-// Replacing this with a real pipeline means adding a step (a scheduled job,
-// or an API route called on page load) that:
-//   1. reads the current jiraIssues and slackMessages
-//   2. runs rules or an LLM prompt over them looking for the four patterns
-//      this app cares about (delivery_risk, recurring_issue,
-//      unresolved_question, possible_overload)
-//   3. emits AIInsight objects whose `sources[].refId` are real ids from
-//      step 1, not just a label string — so "Show evidence" always
-//      resolves to an actual record instead of being static text
-// `status` ('new' | 'accepted' | 'dismissed') would stay app-native state
-// either way, since that's the EM's decision, not something a pipeline
-// determines.
-export const aiInsights: AIInsight[] = [
-  {
-    id: 'i3',
-    category: 'recurring_issue',
-    title: 'Deploy problems have been raised in four separate threads over two weeks',
-    summary:
-      'The same staging/prod deploy timeout has been reported independently four times in #platform-release since Jul 15, most recently yesterday.',
-    sources: [
-      {
-        type: 'slack',
-        refId: 's1',
-        label: '#platform-release, Wei Zhang, Jul 15 — deploy timeout during DB migration step',
-      },
-      {
-        type: 'slack',
-        refId: 's2',
-        label: '#platform-release, Emma, Jul 18 — prod deploy stuck on migration step',
-      },
-      {
-        type: 'slack',
-        refId: 's3',
-        label: '#platform-release, Daniel Osei, Jul 22 — same timeout, manual pipeline restart',
-      },
-      {
-        type: 'slack',
-        refId: 's4',
-        label: '#platform-release, Freya, Jul 27 — fourth occurrence this sprint',
-      },
-    ],
-    confidence: 'high',
-    recommendedAction: 'Open an incident/tech-debt ticket to investigate the recurring deploy timeout',
-    status: 'new',
-  },
-  {
-    id: 'i4',
-    category: 'unresolved_question',
-    title: 'A question about on-call ownership has gone unanswered for three days',
-    summary:
-      'Leo asked who owns the on-call escalation runbook after Alex left the team — no one has replied in #platform-help since Jul 25.',
-    sources: [
-      {
-        type: 'slack',
-        refId: 's5',
-        label:
-          '#platform-help, Leo, Jul 25 — "who owns the on-call escalation runbook now that Alex has left?" (0 replies)',
-      },
-    ],
-    confidence: 'medium',
-    recommendedAction: 'Clarify on-call escalation ownership in #platform-help',
-    status: 'new',
-  },
-  {
-    id: 'i6',
-    category: 'possible_overload',
-    title: 'Parallel initiatives are up while throughput is down',
-    summary:
-      'The team is now running four active initiatives at once, up from two a month ago, while completed points have fallen for two sprints running.',
-    sources: [
-      {
-        type: 'delivery',
-        label: 'Active initiatives per sprint: 2 (Sprint 22) → 3 (Sprint 23) → 4 (Sprint 24)',
-      },
-      {
-        type: 'delivery',
-        label: 'Completed points: 39 (Sprint 22) → 33 (Sprint 23) → 18 so far (Sprint 24)',
-      },
-    ],
-    confidence: 'medium',
-    recommendedAction: 'Review initiative load and reprioritize with the team before adding new work',
-    status: 'accepted',
-  },
-]
-
 export const actionEntries: ActionEntry[] = [
   {
     id: 'action-signal-jira-blocked-work',
@@ -506,6 +410,7 @@ export const actionEntries: ActionEntry[] = [
     createdDate: '2026-07-29',
     sourceSignalId: 'signal-jira-blocked-work',
     sourceSignalTitle: 'Blocked work needs follow-up',
+    sourceDataMode: 'demo',
     sourceEvidence: [
       'TFP-15 “Memory leak in dashboard polling” — Blocked in Jira',
     ],
@@ -515,15 +420,17 @@ export const actionEntries: ActionEntry[] = [
     id: 'action-i6',
     title: 'Review initiative load and reprioritize with the team before adding new work',
     status: 'active',
-    owner: 'Freya',
+    owner: 'Freya Vanir',
     dueDate: '2026-07-31',
     priority: 'medium',
-    source: 'ai',
+    source: 'signal',
     context:
       'The team is now running four active initiatives at once, up from two a month ago, while completed points have fallen for two sprints running.',
     createdDate: '2026-07-20',
-    sourceInsightId: 'i6',
-    sourceInsightTitle: 'Parallel initiatives are up while throughput is down',
+    decisionDate: '2026-07-20',
+    sourceSignalId: 'signal-demo-initiative-load',
+    sourceSignalTitle: 'Parallel initiatives are up while throughput is down',
+    sourceDataMode: 'demo',
     sourceEvidence: [
       'Active initiatives per sprint: 2 (Sprint 22) → 3 (Sprint 23) → 4 (Sprint 24)',
       'Completed points: 39 (Sprint 22) → 33 (Sprint 23) → 18 so far (Sprint 24)',
@@ -531,14 +438,15 @@ export const actionEntries: ActionEntry[] = [
   },
   {
     id: 'action-onboarding',
-    title: 'Set up an onboarding buddy pairing for Leo',
+    title: 'Set up an onboarding buddy pairing for Leo Herculeus',
     status: 'active',
     owner: 'Emma',
     dueDate: '2026-08-03',
     priority: 'medium',
     source: 'manual',
-    context: "Leo joined three weeks ago and doesn't have a designated buddy yet.",
+    context: "Leo Herculeus joined three weeks ago and doesn't have a designated buddy yet.",
     createdDate: '2026-07-20',
+    decisionDate: '2026-07-20',
   },
   {
     id: 'action-oncall',
@@ -550,6 +458,7 @@ export const actionEntries: ActionEntry[] = [
     source: 'manual',
     context: "August rotation hasn't been published yet.",
     createdDate: '2026-07-26',
+    decisionDate: '2026-07-26',
   },
   {
     id: 'action-charter',
@@ -562,6 +471,7 @@ export const actionEntries: ActionEntry[] = [
     context: 'Annual refresh of team working agreements.',
     createdDate: '2026-07-10',
     completedDate: '2026-07-16',
+    decisionDate: '2026-07-16',
   },
   {
     id: 'action-ci',
@@ -573,5 +483,6 @@ export const actionEntries: ActionEntry[] = [
     source: 'manual',
     context: 'Turned out to be a flaky third-party test dependency — not worth tracking further.',
     createdDate: '2026-07-12',
+    decisionDate: '2026-07-13',
   },
 ]
