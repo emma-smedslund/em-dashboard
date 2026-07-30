@@ -90,15 +90,6 @@ export function TeamSignals({
         </p>
       </div>
 
-      <SlackIntegrationStatus
-        messageSource={slackSource}
-        messageCount={slackMessageCount}
-        messagesSyncedAt={slackSyncedAt}
-        messagesLoading={slackLoading}
-        messagesError={slackError}
-        onRefreshMessages={onRefreshSlack}
-      />
-
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {counts.map(({ status: signalStatus, count }) => (
           <div key={signalStatus} className="rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-3">
@@ -199,6 +190,15 @@ export function TeamSignals({
           ))}
         </ul>
       )}
+
+      <SlackIntegrationStatus
+        messageSource={slackSource}
+        messageCount={slackMessageCount}
+        messagesSyncedAt={slackSyncedAt}
+        messagesLoading={slackLoading}
+        messagesError={slackError}
+        onRefreshMessages={onRefreshSlack}
+      />
     </div>
   )
 }

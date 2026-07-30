@@ -30,14 +30,14 @@ const TABS = [
     description: 'Operational delivery health: goal progress, flow, and where work is stuck.',
   },
   {
-    id: 'actions',
-    label: 'Actions & Decisions Log',
-    description: 'AI-suggested and manually added follow-ups, from proposal to completion.',
-  },
-  {
     id: 'signals',
     label: 'Team Signals',
     description: 'Emerging patterns worth reviewing before they become larger problems.',
+  },
+  {
+    id: 'actions',
+    label: 'Actions',
+    description: 'AI-suggested and manually added follow-ups, from proposal to completion.',
   },
   {
     id: 'insights',
@@ -108,10 +108,10 @@ function App() {
       <header className="mb-8 flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <h1 className="text-2xl font-semibold text-[var(--text-primary)]">
-            Platform Team
+            Leo FreYa Tech
           </h1>
           <p className="text-sm text-[var(--text-muted)]">
-            Engineering Manager Dashboard
+            Team Frontend Platform
           </p>
         </div>
         <p className="text-sm text-[var(--text-muted)]">
@@ -203,9 +203,31 @@ function App() {
         )}
       </section>
 
-      <footer className="mt-8 text-center text-xs text-[var(--text-muted)]">
-        Some demo data is used to illustrate how signals from engineering tools can be
-        consolidated and translated into actionable leadership insights.
+      <footer className="mt-10 border-t border-[var(--border)] pt-6 text-center text-xs leading-relaxed text-[var(--text-muted)]">
+        <p>
+          Data sources: Jira ({jira.source === 'live' ? 'live' : 'demo fallback'}) and Slack ({slack.source === 'live' ? 'live' : 'demo fallback'}).
+          {' '}Demo data is used for GitHub review metrics, retrospective follow-ups, team context, seeded actions, and integration fallback examples.
+        </p>
+        <p className="mt-3">
+          Created with Intention by Emma Smedslund in collaboration with CloudCode 2026 ·{' '}
+          <a
+            href="https://github.com/emma-smedslund"
+            target="_blank"
+            rel="noreferrer"
+            className="text-[var(--series-blue)] hover:underline"
+          >
+            GitHub
+          </a>
+          {' · '}
+          <a
+            href="https://www.linkedin.com/in/emmasmedslund/"
+            target="_blank"
+            rel="noreferrer"
+            className="text-[var(--series-blue)] hover:underline"
+          >
+            LinkedIn
+          </a>
+        </p>
       </footer>
 
       {confirmation && (

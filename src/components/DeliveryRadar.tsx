@@ -156,10 +156,10 @@ export function DeliveryRadar({
         </p>
       )}
 
-      <section className="rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-4">
+      <section className="rounded-xl border border-l-4 border-[var(--series-blue)] bg-[var(--surface-1)] p-5 shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <h2 className="text-sm font-semibold text-[var(--text-primary)]">Current Delivery Goal</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-[var(--series-blue)]">Current Delivery Goal</h2>
             {editingGoal ? (
               <form onSubmit={saveGoal} className="mt-3">
                 <textarea
@@ -187,7 +187,7 @@ export function DeliveryRadar({
                 </div>
               </form>
             ) : (
-              <p className={`mt-2 text-sm ${goal.text ? 'font-medium text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>
+              <p className={`mt-2 text-lg font-semibold leading-snug ${goal.text ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>
                 {goal.text || 'No delivery goal has been defined yet.'}
               </p>
             )}
