@@ -5,10 +5,10 @@ import { readStoredJson, writeStoredJson } from '../lib/storage'
 
 const CONFIRMATION_DURATION_MS = 4000
 const STORAGE_KEY = 'em-dashboard:actions-and-insight-decisions'
-const STORAGE_VERSION = 2
+const STORAGE_VERSION = 3
 
 interface StoredActionState {
-  version: 2
+  version: 3
   actions: ActionEntry[]
 }
 
@@ -29,7 +29,7 @@ function isActionEntry(value: unknown): value is ActionEntry {
     isNullableString(value.owner) &&
     isNullableString(value.dueDate) &&
     ['low', 'medium', 'high'].includes(String(value.priority)) &&
-    ['ai', 'signal', 'manual'].includes(String(value.source)) &&
+    ['ai', 'signal', 'manual', 'retrospective'].includes(String(value.source)) &&
     typeof value.context === 'string' &&
     typeof value.createdDate === 'string'
   )
@@ -179,6 +179,9 @@ export function useActions(seedActions: ActionEntry[], members: TeamMember[]) {
     priority: ActionPriority
     context: string
     linkedJiraIssueId: string | null
+    source: 'manual' | 'retrospective'
+    retroDate: string | null
+    retroTheme: string | null
   }) {
     const action: ActionEntry = {
       id: `manual-${Date.now()}`,
@@ -187,11 +190,13 @@ export function useActions(seedActions: ActionEntry[], members: TeamMember[]) {
       owner: input.owner,
       dueDate: input.dueDate,
       priority: input.priority,
-      source: 'manual',
+      source: input.source,
       context: input.context,
       linkedJiraIssueIds: input.linkedJiraIssueId ? [input.linkedJiraIssueId] : undefined,
       createdDate: toISODate(new Date()),
       decisionDate: toISODate(new Date()),
+      retroDate: input.retroDate ?? undefined,
+      retroTheme: input.retroTheme ?? undefined,
     }
     setActions((prev) => [action, ...prev])
     setConfirmation(`Action added: "${action.title}"`)

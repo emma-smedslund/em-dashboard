@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { JiraDataSource, JiraIssue } from '../types'
 import { apiErrorMessage, isJiraIssuesResponse, requestJson } from '../lib/api'
 
+const AUTO_REFRESH_INTERVAL_MS = 5 * 60 * 1000
+
 export function useJiraIssues(demoIssues: JiraIssue[]) {
   const [issues, setIssues] = useState<JiraIssue[]>([])
   const [source, setSource] = useState<JiraDataSource>('demo')
@@ -59,6 +61,13 @@ export function useJiraIssues(demoIssues: JiraIssue[]) {
     void refresh()
     return abortActiveRequest
   }, [abortActiveRequest, refresh])
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void refresh()
+    }, AUTO_REFRESH_INTERVAL_MS)
+    return () => window.clearInterval(interval)
+  }, [refresh])
 
   return { issues, source, projectKey, syncedAt, loading, ready, error, refresh }
 }

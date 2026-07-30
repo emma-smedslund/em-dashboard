@@ -48,6 +48,7 @@ export function TeamSignals({
   slackSource,
   slackMessageCount,
   slackSyncedAt,
+  jiraSyncedAt,
   slackLoading,
   slackError,
   onRefreshSlack,
@@ -61,6 +62,7 @@ export function TeamSignals({
   slackSource: SlackDataSource
   slackMessageCount: number
   slackSyncedAt: string | null
+  jiraSyncedAt: string | null
   slackLoading: boolean
   slackError: string | null
   onRefreshSlack: () => void
@@ -112,7 +114,10 @@ export function TeamSignals({
           label={slackSource === 'live' ? 'Live Slack' : 'Demo Slack fallback'}
         />
         <span className="text-xs text-[var(--text-muted)]">
-          GitHub and retrospective examples use demo data.
+          Auto-refreshes every 5 minutes while this page is open.
+        </span>
+        <span className="text-xs text-[var(--text-muted)]">
+          Last synced: Jira {jiraSyncedAt ? new Date(jiraSyncedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : 'demo fallback'} · Slack {slackSyncedAt ? new Date(slackSyncedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : 'demo fallback'}
         </span>
       </div>
 
@@ -187,7 +192,7 @@ export function TeamSignals({
               </div>
 
               <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--text-muted)]">
-                <span>{signal.source} · {signal.sourceMode === 'live' ? 'Live data' : 'Demo data'}</span>
+                <span>{signal.source} · {signal.sourceMode === 'live' ? 'Live data' : signal.sourceMode === 'user-entered' ? 'User-entered data' : 'Demo data'}</span>
                 <span>{signal.timeRange}</span>
                 <span>Detected {signal.detectedAt}</span>
               </div>

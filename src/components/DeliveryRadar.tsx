@@ -136,7 +136,7 @@ export function DeliveryRadar({
             {loading
               ? 'Syncing…'
               : syncedAt
-                ? `Last synced ${new Date(syncedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+                ? `Last synced ${new Date(syncedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} · Auto-refreshes every 5 min`
                 : 'Live Jira is unavailable; showing the demo dataset.'}
           </span>
         </div>

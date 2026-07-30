@@ -67,7 +67,7 @@ export function SlackIntegrationStatus({
           {messagesLoading
             ? 'Retrieving the last 14 days…'
             : messageSource === 'live'
-              ? `${messageCount} messages · synced ${messagesSyncedAt ? new Date(messagesSyncedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : 'just now'}`
+              ? `${messageCount} messages · last synced ${messagesSyncedAt ? new Date(messagesSyncedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : 'just now'} · auto-refreshes every 5 min`
               : messagesError ?? 'Live Slack messages are unavailable.'}
         </span>
       </div>

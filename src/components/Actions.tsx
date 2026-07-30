@@ -18,11 +18,12 @@ const PRIORITY_PILL: Record<ActionPriority, { level: StatusLevel; label: string 
 }
 
 function getActionSourcePill(action: ActionEntry, jiraDataSource: JiraDataSource) {
+  if (action.source === 'retrospective') return { level: 'good' as const, label: 'Retrospective · User entered' }
   if (action.source === 'manual') return { level: 'neutral' as const, label: 'Added by you' }
   if (action.source === 'signal') {
     return {
-      level: action.sourceDataMode === 'live' ? ('good' as const) : ('neutral' as const),
-      label: `Team signal · ${action.sourceDataMode === 'live' ? 'Live data' : 'Demo data'}`,
+      level: action.sourceDataMode === 'live' || action.sourceDataMode === 'user-entered' ? ('good' as const) : ('neutral' as const),
+      label: `Team signal · ${action.sourceDataMode === 'live' ? 'Live data' : action.sourceDataMode === 'user-entered' ? 'User-entered data' : 'Demo data'}`,
     }
   }
   if ((action.linkedJiraIssueIds?.length ?? 0) > 0) {
@@ -41,6 +42,9 @@ const EMPTY_MANUAL_FORM = {
   priority: 'medium' as ActionPriority,
   context: '',
   linkedJiraIssueId: '',
+  source: 'manual' as 'manual' | 'retrospective',
+  retroDate: '',
+  retroTheme: '',
 }
 
 function OwnerOptions({ members }: { members: TeamMember[] }) {
@@ -147,6 +151,9 @@ export function Actions({
     priority: ActionPriority
     context: string
     linkedJiraIssueId: string | null
+    source: 'manual' | 'retrospective'
+    retroDate: string | null
+    retroTheme: string | null
   }) => void
 }) {
   const [showAddForm, setShowAddForm] = useState(false)
@@ -201,6 +208,9 @@ export function Actions({
       priority: manualForm.priority,
       context: manualForm.context.trim(),
       linkedJiraIssueId: manualForm.linkedJiraIssueId || null,
+      source: manualForm.source,
+      retroDate: manualForm.source === 'retrospective' ? manualForm.retroDate || null : null,
+      retroTheme: manualForm.source === 'retrospective' ? manualForm.retroTheme.trim() || null : null,
     })
     setManualForm(EMPTY_MANUAL_FORM)
     setShowAddForm(false)
@@ -218,7 +228,7 @@ export function Actions({
             {loadingJira
               ? 'Syncing Jira statuses…'
               : jiraDataSource === 'live' && syncedAt
-                ? `Issue statuses synced ${new Date(syncedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+                ? `Last synced ${new Date(syncedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} · Auto-refreshes every 5 min`
                 : jiraError ?? 'Live Jira is unavailable.'}
           </span>
         </div>
@@ -262,7 +272,7 @@ export function Actions({
                 </div>
                 <StatusPill
                   level={action.status === 'completed' ? 'good' : action.status === 'active' ? 'warning' : 'neutral'}
-                  label={action.source === 'manual' ? 'Manual decision' : 'Signal follow-up'}
+                  label={action.source === 'manual' ? 'Manual decision' : action.source === 'retrospective' ? 'Retro decision' : 'Signal follow-up'}
                 />
               </li>
             ))}
@@ -422,6 +432,20 @@ export function Actions({
             onSubmit={submitManualAction}
             className="mb-3 space-y-2 rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-4"
           >
+            <label className="block text-xs text-[var(--text-muted)]">
+              Source
+              <select
+                value={manualForm.source}
+                onChange={(e) => setManualForm((form) => ({
+                  ...form,
+                  source: e.target.value as 'manual' | 'retrospective',
+                }))}
+                className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--page-plane)] p-1.5 text-sm text-[var(--text-primary)]"
+              >
+                <option value="manual">Manual follow-up</option>
+                <option value="retrospective">Retrospective action</option>
+              </select>
+            </label>
             <input
               type="text"
               required
@@ -430,6 +454,29 @@ export function Actions({
               onChange={(e) => setManualForm((f) => ({ ...f, title: e.target.value }))}
               className="w-full rounded-md border border-[var(--border)] bg-[var(--page-plane)] p-1.5 text-sm text-[var(--text-primary)]"
             />
+            {manualForm.source === 'retrospective' && (
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <label className="text-xs text-[var(--text-muted)]">
+                  Retrospective date
+                  <input
+                    type="date"
+                    value={manualForm.retroDate}
+                    onChange={(e) => setManualForm((form) => ({ ...form, retroDate: e.target.value }))}
+                    className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--page-plane)] p-1.5 text-sm text-[var(--text-primary)]"
+                  />
+                </label>
+                <label className="text-xs text-[var(--text-muted)]">
+                  Theme
+                  <input
+                    type="text"
+                    placeholder="e.g. Release reliability"
+                    value={manualForm.retroTheme}
+                    onChange={(e) => setManualForm((form) => ({ ...form, retroTheme: e.target.value }))}
+                    className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--page-plane)] p-1.5 text-sm text-[var(--text-primary)]"
+                  />
+                </label>
+              </div>
+            )}
             <textarea
               placeholder="Short context (optional)"
               value={manualForm.context}
@@ -529,6 +576,11 @@ export function Actions({
                   {action.owner ?? 'Unassigned'} ·{' '}
                   {action.dueDate ? formatRelativeDue(action.dueDate) : 'No due date'}
                 </p>
+                {action.source === 'retrospective' && (
+                  <p className="mt-1 text-xs text-[var(--text-muted)]">
+                    Retro {action.retroDate ?? action.createdDate} · {action.retroTheme ?? 'General improvement'}
+                  </p>
+                )}
 
                 {action.sourceInsightTitle && (
                   <p className="mt-1 text-xs text-[var(--text-muted)]">

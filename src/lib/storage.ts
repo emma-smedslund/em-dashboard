@@ -15,3 +15,12 @@ export function writeStoredJson(key: string, value: unknown): boolean {
     return false
   }
 }
+
+const DASHBOARD_STORAGE_PREFIX = 'em-dashboard:'
+
+export function resetDashboardStorage(): void {
+  for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+    const key = localStorage.key(index)
+    if (key?.startsWith(DASHBOARD_STORAGE_PREFIX)) localStorage.removeItem(key)
+  }
+}

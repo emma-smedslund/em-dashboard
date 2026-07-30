@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { SlackDataSource, SlackMessage } from '../types'
 import { apiErrorMessage, isSlackMessagesResponse, requestJson } from '../lib/api'
 
+const AUTO_REFRESH_INTERVAL_MS = 5 * 60 * 1000
+
 export function useSlackMessages(demoMessages: SlackMessage[]) {
   const [messages, setMessages] = useState<SlackMessage[]>(demoMessages)
   const [source, setSource] = useState<SlackDataSource>('demo')
@@ -49,6 +51,13 @@ export function useSlackMessages(demoMessages: SlackMessage[]) {
     void refresh()
     return abortActiveRequest
   }, [abortActiveRequest, refresh])
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void refresh()
+    }, AUTO_REFRESH_INTERVAL_MS)
+    return () => window.clearInterval(interval)
+  }, [refresh])
 
   return { messages, source, syncedAt, channelCount, loading, error, refresh }
 }

@@ -2,7 +2,7 @@ import type {
   JiraDataSource,
   JiraIssue,
   PullRequestPeriodMetric,
-  RetrospectiveActionPoint,
+  ActionEntry,
   SlackMessage,
   SlackDataSource,
   TeamSignal,
@@ -15,7 +15,7 @@ interface SignalInput {
   slackMessages: SlackMessage[]
   slackDataSource: SlackDataSource
   pullRequestMetrics: PullRequestPeriodMetric[]
-  retrospectiveActions: RetrospectiveActionPoint[]
+  retrospectiveActions: ActionEntry[]
   referenceDate?: Date
 }
 
@@ -194,22 +194,24 @@ export function detectTeamSignals({
     })
   }
 
-  const stalledRetro = retrospectiveActions.find(
-    (action) => action.status === 'open' && daysBetween(action.updatedDate, detectedAt) >= 14,
-  )
+  const stalledRetro = retrospectiveActions
+    .filter((action) => action.source === 'retrospective' && action.status === 'active')
+    .map((action) => ({ action, daysOpen: daysBetween(action.retroDate ?? action.createdDate, detectedAt) }))
+    .filter(({ daysOpen }) => daysOpen >= 14)
+    .sort((a, b) => b.daysOpen - a.daysOpen)[0]
   if (stalledRetro) {
     signals.push({
-      id: `signal-retro-${stalledRetro.id}`,
-      title: 'Retrospective action has not progressed',
-      summary: 'An agreed improvement action has had no recorded progress for several weeks.',
+      id: `signal-retro-${stalledRetro.action.id}`,
+      title: 'Retrospective action may need follow-up',
+      summary: `An agreed retrospective action has remained active for ${stalledRetro.daysOpen} days. It may need a clearer next step, renewed ownership, or closure.`,
       category: 'Retrospective',
       severity: 'Watch',
       confidence: 'medium',
       source: 'Retrospective',
-      sourceMode: 'demo',
+      sourceMode: 'user-entered',
       detectedAt,
       timeRange: 'Since the last retrospective cycle',
-      evidence: [{ label: `${stalledRetro.title} · Theme: ${stalledRetro.theme}` }],
+      evidence: [{ label: `${stalledRetro.action.title} · Theme: ${stalledRetro.action.retroTheme ?? 'General improvement'}` }],
       suggestedFollowUp: 'Confirm whether the action is still relevant and assign a next step or close it.',
       status: 'New',
     })

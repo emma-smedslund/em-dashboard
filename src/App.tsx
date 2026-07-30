@@ -15,10 +15,11 @@ import {
 } from './data/mockData'
 import { DEMO_REFERENCE_DATE, formatAsOf } from './lib/date'
 import { detectTeamSignals } from './lib/teamSignals'
-import { pullRequestPeriodMetrics, retrospectiveActionPoints } from './data/teamSignalData'
+import { pullRequestPeriodMetrics } from './data/teamSignalData'
 import { useTeamSignals } from './hooks/useTeamSignals'
 import { useSlackMessages } from './hooks/useSlackMessages'
 import { applyTeamDisplayNamesToJiraIssues, resolveTeamMembersFromSlack } from './lib/teamIdentity'
+import { resetDashboardStorage } from './lib/storage'
 
 const TABS = [
   {
@@ -57,19 +58,6 @@ function App() {
     ),
     [displayedTeamMembers, jira.issues, jira.ready],
   )
-  const detectedTeamSignals = useMemo(
-    () => detectTeamSignals({
-      jiraIssues,
-      jiraDataSource: jira.source,
-      slackMessages: slack.messages,
-      slackDataSource: slack.source,
-      pullRequestMetrics: pullRequestPeriodMetrics,
-      retrospectiveActions: retrospectiveActionPoints,
-      referenceDate: jira.source === 'live' ? new Date() : DEMO_REFERENCE_DATE,
-    }),
-    [jiraIssues, jira.source, slack.messages, slack.source],
-  )
-  const { signals: teamSignals, setSignalStatus } = useTeamSignals(detectedTeamSignals)
   const {
     actions,
     suggestActionFromSignal,
@@ -80,6 +68,25 @@ function App() {
     confirmation,
     clearConfirmation,
   } = useActions(actionEntries, displayedTeamMembers)
+  const detectedTeamSignals = useMemo(
+    () => detectTeamSignals({
+      jiraIssues,
+      jiraDataSource: jira.source,
+      slackMessages: slack.messages,
+      slackDataSource: slack.source,
+      pullRequestMetrics: pullRequestPeriodMetrics,
+      retrospectiveActions: actions,
+      referenceDate: jira.source === 'live' ? new Date() : DEMO_REFERENCE_DATE,
+    }),
+    [actions, jiraIssues, jira.source, slack.messages, slack.source],
+  )
+  const { signals: teamSignals, setSignalStatus } = useTeamSignals(detectedTeamSignals)
+
+  function resetDemoState() {
+    if (!window.confirm('Reset the delivery goal, actions, decisions, and signal statuses to the original interview demo?')) return
+    resetDashboardStorage()
+    window.location.reload()
+  }
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -151,6 +158,7 @@ function App() {
             slackSource={slack.source}
             slackMessageCount={slack.messages.length}
             slackSyncedAt={slack.syncedAt}
+            jiraSyncedAt={jira.syncedAt}
             slackLoading={slack.loading}
             slackError={slack.error}
             onRefreshSlack={slack.refresh}
@@ -163,8 +171,11 @@ function App() {
       <footer className="mt-10 border-t border-[var(--border)] pt-6 text-center text-xs leading-relaxed text-[var(--text-muted)]">
         <p>
           Data sources: Jira ({jira.source === 'live' ? 'live' : 'demo fallback'}) and Slack ({slack.source === 'live' ? 'live' : 'demo fallback'}).
-          {' '}Demo data is used for GitHub review metrics, retrospective follow-ups, team context, seeded actions, and integration fallback examples.
+          {' '}Demo data is used for GitHub review metrics, team context, seeded actions, and integration fallback examples. Retrospective actions are entered by the user.
         </p>
+        <button type="button" onClick={resetDemoState} className="mt-3 text-[var(--series-blue)] hover:underline">
+          Reset interview demo
+        </button>
         <p className="mt-3">
           Created with Intention by Emma Smedslund in collaboration with Claude Code 2026 ·{' '}
           <a

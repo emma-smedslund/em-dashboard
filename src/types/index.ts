@@ -55,7 +55,7 @@ export type SlackDataSource = 'live' | 'demo'
 
 export type ActionStatus = 'suggested' | 'active' | 'completed' | 'dismissed'
 export type ActionPriority = 'low' | 'medium' | 'high'
-export type ActionSource = 'ai' | 'signal' | 'manual'
+export type ActionSource = 'ai' | 'signal' | 'manual' | 'retrospective'
 
 export interface ActionEntry {
   id: string
@@ -74,8 +74,10 @@ export interface ActionEntry {
   linkedJiraIssueIds?: string[] // live Jira references; Jira status remains read-only in this app
   sourceSignalId?: string
   sourceSignalTitle?: string
-  sourceDataMode?: 'live' | 'demo'
+  sourceDataMode?: 'live' | 'demo' | 'user-entered'
   decisionDate?: string
+  retroDate?: string
+  retroTheme?: string
 }
 
 export const TEAM_SIGNAL_CATEGORIES = [
@@ -111,7 +113,7 @@ export interface TeamSignal {
   severity: TeamSignalSeverity
   confidence: 'low' | 'medium' | 'high'
   source: TeamSignalSource
-  sourceMode: 'live' | 'demo'
+  sourceMode: 'live' | 'demo' | 'user-entered'
   detectedAt: string
   timeRange: string
   evidence: TeamSignalEvidence[]
@@ -123,13 +125,4 @@ export interface PullRequestPeriodMetric {
   period: 'current' | 'previous'
   medianReviewHours: number
   topTwoReviewerShare: number
-}
-
-export interface RetrospectiveActionPoint {
-  id: string
-  title: string
-  theme: string
-  status: 'open' | 'resolved'
-  createdDate: string
-  updatedDate: string
 }
