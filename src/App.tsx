@@ -20,6 +20,8 @@ import { generateJiraInsights } from './lib/jiraInsights'
 import { detectTeamSignals } from './lib/teamSignals'
 import { pullRequestPeriodMetrics, retrospectiveActionPoints } from './data/teamSignalData'
 import { useTeamSignals } from './hooks/useTeamSignals'
+import { useSlackMessages } from './hooks/useSlackMessages'
+import { generateSlackInsights } from './lib/slackInsights'
 
 const TABS = [
   {
@@ -46,8 +48,11 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]['id']
 
-const DEMO_INSIGHTS = aiInsights.filter(
+const NON_JIRA_DEMO_INSIGHTS = aiInsights.filter(
   (insight) => !insight.sources.some((source) => source.type === 'jira'),
+)
+const DELIVERY_DEMO_INSIGHTS = NON_JIRA_DEMO_INSIGHTS.filter(
+  (insight) => !insight.sources.some((source) => source.type === 'slack'),
 )
 
 function App() {
@@ -55,25 +60,33 @@ function App() {
   const active = TABS.find((tab) => tab.id === activeTab)!
   const { goal, setText, linkIssue, unlinkIssue } = useDeliveryGoal(deliveryGoalSeed)
   const jira = useJiraIssues(demoJiraIssues)
+  const slack = useSlackMessages(slackMessages)
   const jiraIssues = useMemo(() => (jira.ready ? jira.issues : []), [jira.issues, jira.ready])
   const generatedJiraInsights = useMemo(
     () => generateJiraInsights(jiraIssues, jira.source === 'live' ? new Date() : DEMO_REFERENCE_DATE),
     [jiraIssues, jira.source],
   )
   const insightSeed = useMemo(
-    () => [...generatedJiraInsights, ...DEMO_INSIGHTS],
-    [generatedJiraInsights],
+    () => [
+      ...generatedJiraInsights,
+      ...(slack.source === 'live'
+        ? generateSlackInsights(slack.messages)
+        : NON_JIRA_DEMO_INSIGHTS),
+      ...(slack.source === 'live' ? DELIVERY_DEMO_INSIGHTS : []),
+    ],
+    [generatedJiraInsights, slack.messages, slack.source],
   )
   const detectedTeamSignals = useMemo(
     () => detectTeamSignals({
       jiraIssues,
       jiraDataSource: jira.source,
-      slackMessages,
+      slackMessages: slack.messages,
+      slackDataSource: slack.source,
       pullRequestMetrics: pullRequestPeriodMetrics,
       retrospectiveActions: retrospectiveActionPoints,
       referenceDate: jira.source === 'live' ? new Date() : DEMO_REFERENCE_DATE,
     }),
-    [jiraIssues, jira.source],
+    [jiraIssues, jira.source, slack.messages, slack.source],
   )
   const { signals: teamSignals, setSignalStatus } = useTeamSignals(detectedTeamSignals)
   const {
@@ -138,7 +151,12 @@ function App() {
           <AIInsights
             insights={insights}
             jiraIssues={jiraIssues}
-            slackMessages={slackMessages}
+            slackMessages={slack.messages}
+            slackDataSource={slack.source}
+            slackSyncedAt={slack.syncedAt}
+            slackLoading={slack.loading}
+            slackError={slack.error}
+            onRefreshSlack={slack.refresh}
             members={teamMembers}
             jiraDataSource={jira.source}
             projectKey={jira.projectKey}
@@ -173,6 +191,12 @@ function App() {
           <TeamSignals
             signals={teamSignals}
             jiraIssues={jiraIssues}
+            slackSource={slack.source}
+            slackMessageCount={slack.messages.length}
+            slackSyncedAt={slack.syncedAt}
+            slackLoading={slack.loading}
+            slackError={slack.error}
+            onRefreshSlack={slack.refresh}
             onCreateAction={suggestActionFromSignal}
             onSetStatus={setSignalStatus}
           />

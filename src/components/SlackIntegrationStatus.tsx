@@ -1,14 +1,30 @@
 import { useSlackHealth } from '../hooks/useSlackHealth'
 import { useSlackChannels } from '../hooks/useSlackChannels'
 import { StatusPill } from './StatusPill'
+import type { SlackDataSource } from '../types'
 
-export function SlackIntegrationStatus() {
+export function SlackIntegrationStatus({
+  messageSource,
+  messageCount,
+  messagesSyncedAt,
+  messagesLoading,
+  messagesError,
+  onRefreshMessages,
+}: {
+  messageSource: SlackDataSource
+  messageCount: number
+  messagesSyncedAt: string | null
+  messagesLoading: boolean
+  messagesError: string | null
+  onRefreshMessages: () => void
+}) {
   const { connection, loading, error, refresh } = useSlackHealth()
   const channels = useSlackChannels()
 
   function refreshAll() {
     void refresh()
     void channels.refresh()
+    onRefreshMessages()
   }
 
   return (
@@ -33,15 +49,28 @@ export function SlackIntegrationStatus() {
         <button
           type="button"
           onClick={refreshAll}
-          disabled={loading || channels.loading}
+          disabled={loading || channels.loading || messagesLoading}
           className="text-xs font-medium text-[var(--series-blue)] hover:underline disabled:opacity-50"
         >
-          {loading || channels.loading ? 'Checking…' : 'Refresh Slack status'}
+          {loading || channels.loading || messagesLoading ? 'Checking…' : 'Refresh Slack data'}
         </button>
       </div>
       <p className="mt-2 text-xs text-[var(--text-muted)]">
-        Phase 3 verifies the configured public channels and bot membership. Messages are not retrieved yet.
+        Phase 4 reads recent messages from joined channels. The app uses demo Slack data if retrieval fails.
       </p>
+      <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-[var(--border)] pt-3">
+        <StatusPill
+          level={messageSource === 'live' ? 'good' : 'neutral'}
+          label={messageSource === 'live' ? 'Live messages' : 'Demo messages'}
+        />
+        <span className="text-xs text-[var(--text-muted)]">
+          {messagesLoading
+            ? 'Retrieving the last 14 days…'
+            : messageSource === 'live'
+              ? `${messageCount} messages · synced ${messagesSyncedAt ? new Date(messagesSyncedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : 'just now'}`
+              : messagesError ?? 'Live Slack messages are unavailable.'}
+        </span>
+      </div>
       <div className="mt-3 border-t border-[var(--border)] pt-3">
         <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
           Configured channels

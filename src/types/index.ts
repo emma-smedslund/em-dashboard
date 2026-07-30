@@ -49,6 +49,8 @@ export interface SlackMessage {
   replyCount: number
 }
 
+export type SlackDataSource = 'live' | 'demo'
+
 export type InsightCategory =
   | 'delivery_risk'
   | 'recurring_issue'

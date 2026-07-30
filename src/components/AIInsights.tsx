@@ -7,6 +7,7 @@ import type {
   TeamMember,
   InsightCategory,
   JiraDataSource,
+  SlackDataSource,
 } from '../types'
 import { getJiraStatus } from '../lib/jira'
 import { StatusPill } from './StatusPill'
@@ -37,12 +38,14 @@ function SourceCard({
   slackMessages,
   members,
   jiraDataSource,
+  slackDataSource,
 }: {
   source: InsightSource
   jiraIssues: JiraIssue[]
   slackMessages: SlackMessage[]
   members: TeamMember[]
   jiraDataSource: JiraDataSource
+  slackDataSource: SlackDataSource
 }) {
   if (source.type === 'jira') {
     const issue = jiraIssues.find((i) => i.id === source.refId)
@@ -86,7 +89,7 @@ function SourceCard({
       return (
         <>
           <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
-            Demo Slack
+            {slackDataSource === 'live' ? 'Live Slack' : 'Demo Slack'}
           </p>
           <p className="text-xs text-[var(--text-muted)]">
             {message.channel} · {message.authorName} · {formatShortDate(message.timestamp)}
@@ -118,12 +121,17 @@ export function AIInsights({
   slackMessages,
   members,
   jiraDataSource,
+  slackDataSource,
+  slackSyncedAt,
+  slackLoading,
+  slackError,
   projectKey,
   syncedAt,
   loading,
   error,
   jiraInsightCount,
   onRefreshJira,
+  onRefreshSlack,
   onAddToActions,
   onDismiss,
 }: {
@@ -132,12 +140,17 @@ export function AIInsights({
   slackMessages: SlackMessage[]
   members: TeamMember[]
   jiraDataSource: JiraDataSource
+  slackDataSource: SlackDataSource
+  slackSyncedAt: string | null
+  slackLoading: boolean
+  slackError: string | null
   projectKey: string | null
   syncedAt: string | null
   loading: boolean
   error: string | null
   jiraInsightCount: number
   onRefreshJira: () => void
+  onRefreshSlack: () => void
   onAddToActions: (insightId: string) => void
   onDismiss: (insightId: string) => void
 }) {
@@ -160,7 +173,10 @@ export function AIInsights({
             level={jiraDataSource === 'live' ? 'good' : 'neutral'}
             label={jiraDataSource === 'live' ? `Live Jira · ${projectKey ?? ''}` : 'Demo Jira data'}
           />
-          <StatusPill level="neutral" label="Demo Slack" />
+          <StatusPill
+            level={slackDataSource === 'live' ? 'good' : 'neutral'}
+            label={slackDataSource === 'live' ? 'Live Slack' : 'Demo Slack'}
+          />
           <span className="text-xs text-[var(--text-muted)]">
             {loading
               ? 'Analyzing Jira signals…'
@@ -169,14 +185,25 @@ export function AIInsights({
                 : error ?? 'Live Jira is unavailable.'}
           </span>
         </div>
-        <button
-          type="button"
-          onClick={onRefreshJira}
-          disabled={loading}
-          className="text-xs font-medium text-[var(--series-blue)] hover:underline disabled:opacity-50"
-        >
-          {loading ? 'Refreshing…' : 'Refresh Jira'}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onRefreshSlack}
+            disabled={slackLoading}
+            title={slackError ?? (slackSyncedAt ? `Synced ${new Date(slackSyncedAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}` : undefined)}
+            className="text-xs font-medium text-[var(--series-blue)] hover:underline disabled:opacity-50"
+          >
+            {slackLoading ? 'Refreshing Slack…' : 'Refresh Slack'}
+          </button>
+          <button
+            type="button"
+            onClick={onRefreshJira}
+            disabled={loading}
+            className="text-xs font-medium text-[var(--series-blue)] hover:underline disabled:opacity-50"
+          >
+            {loading ? 'Refreshing Jira…' : 'Refresh Jira'}
+          </button>
+        </div>
       </div>
 
       {!loading && jiraInsightCount === 0 && (
@@ -234,6 +261,7 @@ export function AIInsights({
                       slackMessages={slackMessages}
                       members={members}
                       jiraDataSource={jiraDataSource}
+                      slackDataSource={slackDataSource}
                     />
                   </li>
                 ))}

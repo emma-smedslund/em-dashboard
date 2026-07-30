@@ -4,6 +4,7 @@ import type {
   PullRequestPeriodMetric,
   RetrospectiveActionPoint,
   SlackMessage,
+  SlackDataSource,
   TeamSignal,
 } from '../types'
 import { daysBetween, toISODate } from './date'
@@ -12,6 +13,7 @@ interface SignalInput {
   jiraIssues: JiraIssue[]
   jiraDataSource: JiraDataSource
   slackMessages: SlackMessage[]
+  slackDataSource: SlackDataSource
   pullRequestMetrics: PullRequestPeriodMetric[]
   retrospectiveActions: RetrospectiveActionPoint[]
   referenceDate?: Date
@@ -24,6 +26,7 @@ export function detectTeamSignals({
   jiraIssues,
   jiraDataSource,
   slackMessages,
+  slackDataSource,
   pullRequestMetrics,
   retrospectiveActions,
   referenceDate = new Date(),
@@ -116,7 +119,7 @@ export function detectTeamSignals({
       category: 'Quality',
       severity: 'Attention',
       source: 'Slack',
-      sourceMode: 'demo',
+      sourceMode: slackDataSource,
       detectedAt,
       timeRange: 'Last 2 weeks',
       evidence: deployThreads.map((message) => ({

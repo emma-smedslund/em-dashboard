@@ -2,6 +2,7 @@ import type { JiraIssuesResponse, JiraIssue } from '../types'
 import type {
   SlackChannelsResponse,
   SlackHealthResponse,
+  SlackMessagesResponse,
 } from '../types/slack'
 
 const REQUEST_TIMEOUT_MS = 15_000
@@ -66,6 +67,30 @@ export function isSlackChannelsResponse(value: unknown): value is SlackChannelsR
     typeof value.configuredCount === 'number' &&
     typeof value.foundCount === 'number' &&
     typeof value.joinedCount === 'number' &&
+    isString(value.syncedAt)
+  )
+}
+
+export function isSlackMessagesResponse(value: unknown): value is SlackMessagesResponse {
+  if (!isRecord(value)) return false
+  if ('error' in value) return isApiError(value.error)
+  return (
+    Array.isArray(value.messages) &&
+    value.messages.every(
+      (message) =>
+        isRecord(message) &&
+        isString(message.id) &&
+        isString(message.channel) &&
+        isString(message.authorName) &&
+        isString(message.timestamp) &&
+        isString(message.text) &&
+        isString(message.threadId) &&
+        typeof message.replyCount === 'number',
+    ) &&
+    typeof value.windowDays === 'number' &&
+    typeof value.channelCount === 'number' &&
+    Array.isArray(value.truncatedChannels) &&
+    value.truncatedChannels.every(isString) &&
     isString(value.syncedAt)
   )
 }

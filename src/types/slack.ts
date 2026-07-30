@@ -50,3 +50,13 @@ export interface SlackChannelsFailure {
 }
 
 export type SlackChannelsResponse = SlackChannelsSuccess | SlackChannelsFailure
+
+export interface SlackMessagesSuccess {
+  messages: import('./index').SlackMessage[]
+  windowDays: number
+  channelCount: number
+  truncatedChannels: string[]
+  syncedAt: string
+}
+
+export type SlackMessagesResponse = SlackMessagesSuccess | SlackChannelsFailure

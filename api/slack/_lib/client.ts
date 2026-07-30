@@ -7,6 +7,7 @@ export type SlackIntegrationErrorCode =
   | 'not_configured'
   | 'authentication_failed'
   | 'missing_scope'
+  | 'channel_access'
   | 'rate_limited'
   | 'unavailable'
   | 'invalid_response'

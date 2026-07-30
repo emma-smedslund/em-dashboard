@@ -6,6 +6,7 @@ import type {
   TeamSignalSeverity,
   TeamSignalSource,
   TeamSignalStatus,
+  SlackDataSource,
 } from '../types'
 import {
   TEAM_SIGNAL_CATEGORIES,
@@ -34,11 +35,23 @@ type FilterValue<T extends string> = T | 'All'
 export function TeamSignals({
   signals,
   jiraIssues,
+  slackSource,
+  slackMessageCount,
+  slackSyncedAt,
+  slackLoading,
+  slackError,
+  onRefreshSlack,
   onCreateAction,
   onSetStatus,
 }: {
   signals: TeamSignal[]
   jiraIssues: JiraIssue[]
+  slackSource: SlackDataSource
+  slackMessageCount: number
+  slackSyncedAt: string | null
+  slackLoading: boolean
+  slackError: string | null
+  onRefreshSlack: () => void
   onCreateAction: (signal: TeamSignal) => boolean
   onSetStatus: (id: string, status: TeamSignalStatus) => void
 }) {
@@ -77,7 +90,14 @@ export function TeamSignals({
         </p>
       </div>
 
-      <SlackIntegrationStatus />
+      <SlackIntegrationStatus
+        messageSource={slackSource}
+        messageCount={slackMessageCount}
+        messagesSyncedAt={slackSyncedAt}
+        messagesLoading={slackLoading}
+        messagesError={slackError}
+        onRefreshMessages={onRefreshSlack}
+      />
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {counts.map(({ status: signalStatus, count }) => (

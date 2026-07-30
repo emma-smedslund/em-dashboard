@@ -309,7 +309,7 @@ export const deliveryGoalSeed: DeliveryGoal = {
 //   #platform-release — deploy/release chatter, plus automated posts from
 //     the Jira <-> Slack integration (e.g. "ticket moved to Blocked")
 //   #platform-help     — questions and requests for help
-//   #platform-alerts   — automated monitoring/observability alerts
+//   #platform-team     — team coordination and automated service alerts
 //   #incidents         — formal incident declarations and updates
 //
 // To replace with a real Slack integration (Slack Web API), map fields as:
@@ -382,7 +382,7 @@ export const slackMessages: SlackMessage[] = [
   },
   {
     id: 's7',
-    channel: '#platform-alerts',
+    channel: '#platform-team',
     authorName: 'Monitoring Bot',
     timestamp: '2026-07-26T13:45:00',
     text: 'Error rate on checkout-service exceeded 2% for 15 minutes (threshold: 1%).',

@@ -3,5 +3,4 @@ export const DASHBOARD_SLACK_CHANNEL_NAMES = [
   'platform-team',
   'platform-release',
   'incidents',
-  'social',
 ] as const
