@@ -258,7 +258,7 @@ export function Actions({
         {decisions.length > 0 && (
           <ul className="mt-3 divide-y divide-[var(--border)]">
             {decisions.slice(0, 8).map((action) => (
-              <li key={`decision-${action.id}`} className="flex items-start justify-between gap-3 py-2">
+              <li key={`decision-${action.id}`} className="flex flex-col gap-2 py-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-[var(--text-primary)]">{action.title}</p>
                   <p className="mt-0.5 text-xs text-[var(--text-muted)]">
@@ -293,11 +293,11 @@ export function Actions({
                 key={action.id}
                 className="rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-4"
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                   <h3 className="text-sm font-semibold text-[var(--text-primary)]">
                     {action.title}
                   </h3>
-                  <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
+                  <div className="flex max-w-full flex-wrap gap-1.5 sm:shrink-0 sm:justify-end">
                     <StatusPill
                       level={getActionSourcePill(action, jiraDataSource).level}
                       label={getActionSourcePill(action, jiraDataSource).label}
@@ -549,11 +549,11 @@ export function Actions({
                 key={action.id}
                 className="rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-4"
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                   <h3 className="text-sm font-semibold text-[var(--text-primary)]">
                     {action.title}
                   </h3>
-                  <div className="flex shrink-0 gap-1.5">
+                  <div className="flex max-w-full flex-wrap gap-1.5 sm:shrink-0 sm:justify-end">
                     <StatusPill
                       level={getActionSourcePill(action, jiraDataSource).level}
                       label={getActionSourcePill(action, jiraDataSource).label}

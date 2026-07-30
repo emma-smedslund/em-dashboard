@@ -160,6 +160,9 @@ export function DeliveryRadar({
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-[var(--series-blue)]">Current Delivery Goal</h2>
+            <p className="mt-1 text-[10px] text-[var(--text-muted)]">
+              Goal setup is saved in this browser; linked issue statuses come from Jira.
+            </p>
             {editingGoal ? (
               <form onSubmit={saveGoal} className="mt-3">
                 <textarea
