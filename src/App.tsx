@@ -86,7 +86,7 @@ function App() {
       <header className="mb-8 flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <h1 className="text-2xl font-semibold text-[var(--text-primary)]">
-            Leo FreYa Tech
+            Leo Freya Tech
           </h1>
           <p className="text-sm text-[var(--text-muted)]">
             Team Frontend Platform
