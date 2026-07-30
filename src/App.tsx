@@ -166,7 +166,7 @@ function App() {
           {' '}Demo data is used for GitHub review metrics, retrospective follow-ups, team context, seeded actions, and integration fallback examples.
         </p>
         <p className="mt-3">
-          Created with Intention by Emma Smedslund in collaboration with CloudCode 2026 ·{' '}
+          Created with Intention by Emma Smedslund in collaboration with Claude Code 2026 ·{' '}
           <a
             href="https://github.com/emma-smedslund"
             target="_blank"
