@@ -14,8 +14,8 @@ import type {
 
 export const teamMembers: TeamMember[] = [
   { id: 'm1', name: 'Freya Vanir', initials: 'FV', role: 'Software Engineer' },
-  { id: 'm2', name: 'Daniel Osei', initials: 'DO', role: 'Engineer' },
-  { id: 'm3', name: 'Wei Zhang', initials: 'WZ', role: 'Engineer' },
+  { id: 'm2', name: 'Daniel Osei', initials: 'DO', role: 'Software Engineer' },
+  { id: 'm3', name: 'Wei Zhang', initials: 'WZ', role: 'Software Engineer' },
   { id: 'm4', name: 'Emma', initials: 'E', role: 'Engineering Manager' },
   { id: 'm5', name: 'Leo Herculeus', initials: 'LH', role: 'Software Engineer' },
 ]
@@ -221,20 +221,20 @@ export const jiraIssues: JiraIssue[] = [
   },
   {
     id: 'TFP-19',
-    title: 'Add dark mode to settings page',
+    title: 'Research Claude Code skills for code review',
     status: 'done',
     assigneeId: 'm2',
-    epic: 'Design System v2',
+    epic: 'Improve code review quality with AI-assisted review',
     startedDate: '2026-07-08',
     doneDate: '2026-07-12',
     updatedDate: '2026-07-12',
   },
   {
     id: 'TFP-20',
-    title: 'Fix flaky integration test for login',
+    title: 'Define frontend code review guidelines',
     status: 'done',
     assigneeId: 'm5',
-    epic: 'Auth Hardening',
+    epic: 'Improve code review quality with AI-assisted review',
     startedDate: '2026-07-10',
     doneDate: '2026-07-13',
     updatedDate: '2026-07-13',
@@ -243,20 +243,20 @@ export const jiraIssues: JiraIssue[] = [
   // --- Done, current 14-day window (Jul 15–28) ---
   {
     id: 'TFP-21',
-    title: 'Add CSV export for admin users',
+    title: 'Create reusable Claude Code review skill',
     status: 'done',
     assigneeId: 'm3',
-    epic: 'Onboarding Revamp',
+    epic: 'Improve code review quality with AI-assisted review',
     startedDate: '2026-07-15',
     doneDate: '2026-07-19',
     updatedDate: '2026-07-19',
   },
   {
     id: 'TFP-22',
-    title: 'Implement webhook signature verification',
+    title: 'Pilot AI-assisted code reviews with FE Platform Team',
     status: 'done',
     assigneeId: 'm1',
-    epic: 'Payments Migration',
+    epic: 'Improve code review quality with AI-assisted review',
     startedDate: '2026-07-17',
     doneDate: '2026-07-22',
     updatedDate: '2026-07-22',
@@ -296,8 +296,8 @@ export const jiraIssues: JiraIssue[] = [
 // Seed for the EM's editable delivery goal — persisted client-side (see
 // useDeliveryGoal), this is just the first-load default.
 export const deliveryGoalSeed: DeliveryGoal = {
-  text: 'Ship the Payments v2 migration end-to-end',
-  linkedIssueIds: ['TFP-11', 'TFP-22', 'TFP-24'],
+  text: 'Improve code review quality with AI-assisted review',
+  linkedIssueIds: ['TFP-19', 'TFP-20', 'TFP-21', 'TFP-22'],
 }
 
 // Simulated Slack source data, standing in for a real Slack integration.
@@ -438,13 +438,13 @@ export const actionEntries: ActionEntry[] = [
   },
   {
     id: 'action-onboarding',
-    title: 'Set up an onboarding buddy pairing for Leo Herculeus',
+    title: 'Set up an onboarding buddy pairing for Leo',
     status: 'active',
     owner: 'Emma',
     dueDate: '2026-08-03',
     priority: 'medium',
     source: 'manual',
-    context: "Leo Herculeus joined three weeks ago and doesn't have a designated buddy yet.",
+    context: "Leo Herculeus joins in three weeks and doesn't have a designated buddy yet.",
     createdDate: '2026-07-20',
     decisionDate: '2026-07-20',
   },
