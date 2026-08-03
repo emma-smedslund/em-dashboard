@@ -235,7 +235,7 @@ export function DeliveryRadar({
                       )}
                       <StatusPill level={jiraStatus.level} label={jiraStatus.label} />
                     </div>
-                    <p className="mt-1 truncate text-xs text-[var(--text-muted)]">{issue.title}</p>
+                    <p className="safe-wrap mt-1 text-xs text-[var(--text-muted)]">{issue.title}</p>
                   </div>
                   <button
                     type="button"
@@ -370,18 +370,18 @@ export function DeliveryRadar({
                 key={issue.id}
                 className="flex flex-col items-start gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
               >
-                <div className="min-w-0">
+                <div className="w-full min-w-0 sm:flex-1">
                   {issue.url ? (
                     <a
                       href={issue.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="truncate text-sm text-[var(--series-blue)] hover:underline"
+                      className="safe-wrap block max-w-full text-sm text-[var(--series-blue)] hover:underline"
                     >
                       {issue.id} · {issue.title}
                     </a>
                   ) : (
-                    <p className="truncate text-sm text-[var(--text-primary)]">
+                    <p className="safe-wrap text-sm text-[var(--text-primary)]">
                       {issue.id} · {issue.title}
                     </p>
                   )}
@@ -406,7 +406,7 @@ export function DeliveryRadar({
                 className="rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-3"
               >
                 <div className="flex flex-col items-start gap-2 sm:flex-row sm:justify-between sm:gap-3">
-                  <p className="text-sm text-[var(--text-primary)]">
+                  <p className="safe-wrap min-w-0 text-sm text-[var(--text-primary)] sm:flex-1">
                     {issue.id} · {issue.title}
                   </p>
                   <StatusPill
@@ -414,7 +414,7 @@ export function DeliveryRadar({
                     label={daysBlocked === null ? 'Duration unavailable' : `${daysBlocked} days`}
                   />
                 </div>
-                <p className="mt-1 text-xs text-[var(--text-muted)]">
+                <p className="safe-wrap mt-1 text-xs text-[var(--text-muted)]">
                   {issue.blockedReason} · {memberName(issue.assigneeId)}
                 </p>
               </li>
@@ -426,7 +426,7 @@ export function DeliveryRadar({
       <section>
         <h2 className="mb-2 text-sm font-semibold text-[var(--text-primary)]">Risks</h2>
         <div className="flex items-center justify-between gap-3 rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-3">
-          <p className="text-sm text-[var(--text-secondary)]">
+          <p className="safe-wrap min-w-0 text-sm text-[var(--text-secondary)]">
             {blocked.length} blocked · {crossTeamCount} cross-team{' '}
             {crossTeamCount === 1 ? 'dependency' : 'dependencies'} · {stale.length} stale
           </p>

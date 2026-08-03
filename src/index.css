@@ -47,3 +47,10 @@ body {
     'Segoe UI',
     sans-serif;
 }
+
+/* External Jira/Slack text can contain long words, URLs, or identifiers.
+   Keep it inside its card at every viewport width. */
+.safe-wrap {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}

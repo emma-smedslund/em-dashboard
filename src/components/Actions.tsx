@@ -96,12 +96,12 @@ function LinkedJiraIssues({
                   href={issue.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="min-w-0 truncate text-xs font-medium text-[var(--series-blue)] hover:underline"
+                  className="safe-wrap block w-full min-w-0 text-xs font-medium text-[var(--series-blue)] hover:underline sm:flex-1"
                 >
                   {issue.id} · {issue.title}
                 </a>
               ) : (
-                <span className="min-w-0 truncate text-xs text-[var(--text-primary)]">
+                <span className="safe-wrap block w-full min-w-0 text-xs text-[var(--text-primary)] sm:flex-1">
                   {issue.id} · {issue.title}
                 </span>
               )}
@@ -260,7 +260,7 @@ export function Actions({
             {decisions.slice(0, 8).map((action) => (
               <li key={`decision-${action.id}`} className="flex flex-col gap-2 py-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-[var(--text-primary)]">{action.title}</p>
+                  <p className="safe-wrap text-xs font-medium text-[var(--text-primary)]">{action.title}</p>
                   <p className="mt-0.5 text-xs text-[var(--text-muted)]">
                     {action.status === 'active'
                       ? `Accepted${action.owner ? ` · Owner: ${action.owner}` : ''}`
@@ -294,7 +294,7 @@ export function Actions({
                 className="rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-4"
               >
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
-                  <h3 className="text-sm font-semibold text-[var(--text-primary)]">
+                  <h3 className="safe-wrap min-w-0 text-sm font-semibold text-[var(--text-primary)]">
                     {action.title}
                   </h3>
                   <div className="flex max-w-full flex-wrap gap-1.5 sm:shrink-0 sm:justify-end">
@@ -309,7 +309,7 @@ export function Actions({
                   </div>
                 </div>
 
-                <p className="mt-1.5 text-sm text-[var(--text-secondary)]">{action.context}</p>
+                <p className="safe-wrap mt-1.5 text-sm text-[var(--text-secondary)]">{action.context}</p>
 
                 <LinkedJiraIssues
                   action={action}
@@ -550,7 +550,7 @@ export function Actions({
                 className="rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-4"
               >
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
-                  <h3 className="text-sm font-semibold text-[var(--text-primary)]">
+                  <h3 className="safe-wrap min-w-0 text-sm font-semibold text-[var(--text-primary)]">
                     {action.title}
                   </h3>
                   <div className="flex max-w-full flex-wrap gap-1.5 sm:shrink-0 sm:justify-end">
@@ -566,7 +566,7 @@ export function Actions({
                 </div>
 
                 {action.context && (
-                  <p className="mt-1.5 text-sm text-[var(--text-secondary)]">{action.context}</p>
+                  <p className="safe-wrap mt-1.5 text-sm text-[var(--text-secondary)]">{action.context}</p>
                 )}
 
                 <LinkedJiraIssues
@@ -632,7 +632,7 @@ export function Actions({
                 className="flex flex-col items-start gap-2 rounded-lg border border-[var(--border)] bg-[var(--surface-1)] p-3 opacity-70 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm text-[var(--text-primary)]">{action.title}</p>
+                  <p className="safe-wrap text-sm text-[var(--text-primary)]">{action.title}</p>
                   <p className="text-xs text-[var(--text-muted)]">
                     {action.owner ?? 'Unassigned'}
                     {action.completedDate ? ` · Completed ${action.completedDate}` : ''}

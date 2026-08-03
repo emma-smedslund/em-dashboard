@@ -88,8 +88,8 @@ export function SlackIntegrationStatus({
               {channels.data.channels.map((channel) => (
                 <li key={channel.id} className="flex flex-col items-start gap-2 rounded-md bg-[var(--page-plane)] p-2 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
-                    <p className="truncate text-xs font-medium text-[var(--text-primary)]">#{channel.name}</p>
-                    <p className="truncate text-[10px] text-[var(--text-muted)]">{channel.id}</p>
+                    <p className="safe-wrap text-xs font-medium text-[var(--text-primary)]">#{channel.name}</p>
+                    <p className="safe-wrap text-[10px] text-[var(--text-muted)]">{channel.id}</p>
                   </div>
                   <StatusPill
                     level={channel.isMember ? 'good' : 'warning'}
@@ -99,7 +99,7 @@ export function SlackIntegrationStatus({
               ))}
               {channels.data.missingChannels.map((channel) => (
                 <li key={channel.name} className="flex flex-col items-start gap-2 rounded-md bg-[var(--page-plane)] p-2 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="truncate text-xs font-medium text-[var(--text-primary)]">#{channel.name}</p>
+                  <p className="safe-wrap text-xs font-medium text-[var(--text-primary)]">#{channel.name}</p>
                   <StatusPill level="critical" label="Not found" />
                 </li>
               ))}

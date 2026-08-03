@@ -152,7 +152,7 @@ export function TeamSignals({
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
                     {signal.category}
                   </p>
-                  <h3 className="text-sm font-semibold text-[var(--text-primary)]">{signal.title}</h3>
+                  <h3 className="safe-wrap text-sm font-semibold text-[var(--text-primary)]">{signal.title}</h3>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   <StatusPill level={SEVERITY_PILL[signal.severity].level} label={SEVERITY_PILL[signal.severity].label} />
@@ -167,7 +167,7 @@ export function TeamSignals({
               <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr]">
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">Why it matters</p>
-                  <p className="mt-1 text-sm text-[var(--text-secondary)]">{signal.summary}</p>
+                  <p className="safe-wrap mt-1 text-sm text-[var(--text-secondary)]">{signal.summary}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">Observed data</p>
@@ -176,13 +176,13 @@ export function TeamSignals({
                       const jiraIssue = item.refId ? jiraIssues.find((issue) => issue.id === item.refId) : undefined
                       const slackMessage = item.refId ? slackMessages.find((message) => message.id === item.refId) : undefined
                       return (
-                        <li key={`${signal.id}-evidence-${index}`} className="text-xs text-[var(--text-secondary)]">
+                        <li key={`${signal.id}-evidence-${index}`} className="safe-wrap text-xs text-[var(--text-secondary)]">
                           {jiraIssue?.url ? (
-                            <a href={jiraIssue.url} target="_blank" rel="noreferrer" className="text-[var(--series-blue)] hover:underline">
+                            <a href={jiraIssue.url} target="_blank" rel="noreferrer" className="safe-wrap text-[var(--series-blue)] hover:underline">
                               {item.label}
                             </a>
                           ) : slackMessage?.url ? (
-                            <a href={slackMessage.url} target="_blank" rel="noreferrer" className="text-[var(--series-blue)] hover:underline">
+                            <a href={slackMessage.url} target="_blank" rel="noreferrer" className="safe-wrap text-[var(--series-blue)] hover:underline">
                               {item.label} ↗
                             </a>
                           ) : item.label}
@@ -202,7 +202,7 @@ export function TeamSignals({
               {signal.suggestedFollowUp && (
                 <div className="mt-3 rounded-md bg-[var(--page-plane)] p-2.5">
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">Suggested follow-up</p>
-                  <p className="mt-1 text-xs text-[var(--text-secondary)]">{signal.suggestedFollowUp}</p>
+                  <p className="safe-wrap mt-1 text-xs text-[var(--text-secondary)]">{signal.suggestedFollowUp}</p>
                 </div>
               )}
 
